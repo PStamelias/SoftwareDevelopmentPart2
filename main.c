@@ -3,5 +3,6 @@
 #include "fun.h"
 int main(){
 	printf("Hello Alex\n");
+	printf("Hello Prokopis\n");
 	return 0;
 }
