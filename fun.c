@@ -4,7 +4,7 @@
 #include "fun.h"
 #define MAX_WORD_LENGTH 31
 
-
+	
 ErrorCode InitializeIndex(){
 
 }
