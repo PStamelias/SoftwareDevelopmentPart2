@@ -1,7 +1,9 @@
 #include "../include/core.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
+extern Index* EditIndex;
 int GetClockTimeInMilliSec()
 {
 	struct timeval t2; gettimeofday(&t2,NULL);
@@ -27,7 +29,11 @@ char temp[MAX_DOC_LENGTH];
 
 void TestSigmod(const char* test_file_str)
 {
-	/*int i, j;
+	char* a="belt";
+	char* b="helt";
+	printf("%u\n",HammingDistance(a,strlen(a),b,strlen(b)));
+	printf("%u\n",EditDistance(a,strlen(a),b,strlen(b)));
+	/*int i, j;()
 	printf("Start Test ...\n"); fflush(NULL);
 	FILE* test_file=fopen(test_file_str, "rt");
 

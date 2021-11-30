@@ -32,11 +32,11 @@
  *  - 1.0 (Feb 1, 2013)
  *    * Initial release
  */
-
+#include <stdbool.h>
 #ifndef __SIGMOD_CORE_H_
 #define __SIGMOD_CORE_H_
 
-#ifdef __cplusplus
+#ifdef __c
 extern "C" {
 #endif
 
@@ -59,11 +59,41 @@ extern "C" {
 #define MAX_QUERY_LENGTH ((MAX_WORD_LENGTH+1)*MAX_QUERY_WORDS)
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+// Keeps all query ID results associated with a dcoument
+
+
 /// Query ID type.
 typedef unsigned int QueryID;
 
 /// Document ID type.
 typedef unsigned int DocID;
+typedef char word;
+
+typedef struct payload_node{
+    word* my_word;
+    struct payload_node* next;
+}payload_node;
+
+typedef struct entry {
+  word* my_word;
+  payload_node* payload;
+  struct entry* next;
+}entry;
+
+typedef struct entry_list{
+  entry* first_node;
+  entry* current_node;
+  unsigned int counter;
+}entry_list;
+
+struct Document
+{
+    DocID doc_id;
+    unsigned int num_res;
+    QueryID* query_ids;
+};
 
 
 /// Matching types:
@@ -106,6 +136,26 @@ typedef enum{
     EC_FAIL
 }
 ErrorCode;
+
+struct NodeIndex{
+  word* wd;
+  int distance;
+  struct NodeIndex* next;
+  struct NodeIndex* firstChild;
+};
+
+typedef struct Index{
+  struct NodeIndex* root;
+  bool type;
+}Index;
+
+struct Query
+{
+    QueryID query_id;
+    char str[MAX_QUERY_LENGTH];
+    MatchType match_type;
+    unsigned int match_dist;
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
@@ -237,8 +287,14 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
+unsigned int HammingDistance(char* a, int na, char* b, int nb);
+int EditDistance(char* a, int na, char* b, int nb);
 
-#ifdef __c
+ErrorCode build_entry_index(const entry_list* el,MatchType type,Index** ix);
+ErrorCode destroy_entry_index(Index* ix);
+void destroy_index_nodes(struct NodeIndex* node);
+
+#ifdef __C
 }
 #endif
 
