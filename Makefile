@@ -26,33 +26,27 @@
 #
 # Current version: 1.0 (initial release)
 	
-
-# Build targets (your implementation targets should go in IMPL_O)
-TEST_O=test_driver/test.o 
+TEST_NEW_O=test_driver/test_through.o
 IMPL_O=ref_impl/core.o
 
-# Compiler flags
 CC  = gcc
 CXX = g++
 CFLAGS=-O3 -fPIC -Wall -g -I. -I./include
 CXXFLAGS=$(CFLAGS)
 LDFLAGS=-lpthread
 
-# The programs that will be built
-PROGRAMS=testdriver
+PROGRAMS=new-testdriver
 
-# The name of the library that will be built
 LIBRARY=core
 
-# Build all programs
 all: $(PROGRAMS)
 
 lib: $(IMPL_O)
 	$(CC) $(CXXFLAGS) -shared -o lib$(LIBRARY).so $(IMPL_O)
-
-testdriver: lib $(TEST_O)
-	$(CC) $(CXXFLAGS) -o testdriver $(TEST_O) ./lib$(LIBRARY).so
+	
+new-testdriver: lib $(TEST_NEW_O)
+	$(CXX) $(CXXFLAGS) -o testdriver $(TEST_NEW_O) ./lib$(LIBRARY).so
 
 clean:
-	rm -f $(PROGRAMS) lib$(LIBRARY).so
+	rm -f testdriver lib$(LIBRARY).so result.txt
 	find . -name '*.o' -print | xargs rm -f
