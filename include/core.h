@@ -33,7 +33,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include <stdbool.h>
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
 
@@ -79,6 +79,47 @@ enum MatchType {
     */
     MT_EDIT_DIST
 };
+
+typedef char word;
+typedef struct payload_node{
+    word* my_word;
+    struct payload_node* next;
+}payload_node;
+typedef struct Index{
+  struct NodeIndex* root;
+  bool type;
+}Index;
+struct Name_Info{
+  struct Name_Info* next;
+  struct Name* ptr;
+};
+typedef struct entry {
+  word* my_word;
+  payload_node* payload;
+  struct entry* next;
+}Entry;
+typedef struct entry_list{
+  Entry* first_node;
+  Entry* current_node;
+  unsigned int counter;
+}entry_list;
+struct NodeIndex{
+  word* wd;
+  int distance;
+  struct NodeIndex* next;
+  struct NodeIndex* firstChild;
+};
+struct word_RootPtr{
+    int word_length;
+    Index* IndexPtr;   
+};
+struct HammingDistanceStruct{
+    struct word_RootPtr* word_RootPtrArray;
+};
+extern struct HammingDistanceStruct* HammingDistanceStructNode;
+extern Index*  BKTreeIndexEdit;
+extern Entry** HashTableExact;
+extern int bucket_sizeofHashTableExact;
 
 /// Error codes:			
 enum ErrorCode {
@@ -231,6 +272,39 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
+
+
+ErrorCode build_entry_index(const entry_list* el,MatchType type,Index** ix);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #ifdef __cplusplus
 }
