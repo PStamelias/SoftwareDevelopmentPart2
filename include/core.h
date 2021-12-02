@@ -82,7 +82,7 @@ enum MatchType {
 
 typedef char word;
 typedef struct payload_node{
-    word* my_word;
+    QueryID query_id;
     struct payload_node* next;
 }payload_node;
 typedef struct Index{
@@ -108,6 +108,10 @@ struct NodeIndex{
   int distance;
   struct NodeIndex* next;
   struct NodeIndex* firstChild;
+};
+struct Deduplicate_Node{
+    word* the_word;
+    struct Deduplicate_Node* next;
 };
 struct word_RootPtr{
     int word_length;
@@ -284,16 +288,10 @@ ErrorCode build_entry_index(const entry_list* el,MatchType type,Index** ix);
 
 
 
-
-
-
-
-
-
-
-
-
-
+int NextPrime(int N);
+bool isPrime(int N);
+int hash_number_char(char* symbol,int buckets);
+char** Deduplicate_Method(const char* query_str,int* size);
 
 
 
