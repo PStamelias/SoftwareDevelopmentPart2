@@ -22,7 +22,7 @@ int bucket_sizeofHashTableExact;
 ErrorCode InitializeIndex(){
 	BKTreeIndexEdit=NULL;
 	HashTableExact=NULL;
-	bucket_sizeofHashTableExact=10;
+	bucket_sizeofHashTableExact=10;/*starting bucket size of hash array*/
 	HashTableExact=malloc(bucket_sizeofHashTableExact*sizeof(Entry*));
 	for(int i=0;i<bucket_sizeofHashTableExact;i++)
 		HashTableExact[i]=NULL;
@@ -34,6 +34,12 @@ ErrorCode InitializeIndex(){
 		HammingDistanceStructNode->word_RootPtrArray[i].IndexPtr=NULL;
 		HammingDistanceStructNode->word_RootPtrArray[i].word_length=4+i;
 	}
+	if(BKTreeIndexEdit==NULL)
+		return EC_FAIL;
+	if(HashTableExact==NULL)
+		return EC_FAIL;
+	if(HammingDistanceStructNode==NULL)
+		return EC_FAIL;
 	return EC_SUCCESS;
 }
 
@@ -62,9 +68,14 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 	printf("query_str=%s\n",query_str);
 	printf("match_type=%d\n",match_type);
 	printf("match_dist=%u\n",match_dist);
+	/*Free array of words*/
 	for(int i=0;i<words_num;i++)
 		free(words_ofquery[i]);
 	free(words_ofquery);
+	words_ofquery=NULL;
+	if(words_ofquery!=NULL)
+		return EC_FAIL;
+	/*********************/
 	return EC_SUCCESS;
 }
 
@@ -194,6 +205,7 @@ int hash_number_char(char* symbol,int buckets){
 	}
 	return h%buckets;
 }
+
 char** Deduplicate_Method(const char* query_str,int* size){
 	int counter=0;
 	int BucketsHashTable=0;
