@@ -113,6 +113,10 @@ struct Deduplicate_Node{
     word* the_word;
     struct Deduplicate_Node* next;
 };
+struct Deduplicate_Hash_Array{
+    struct Deduplicate_Node** array;
+    unsigned int entries_counter;
+};
 struct word_RootPtr{
     int word_length;
     Index* IndexPtr;   
@@ -292,17 +296,11 @@ int NextPrime(int N);
 bool isPrime(int N);
 int hash_number_char(char* symbol,int buckets);
 char** Deduplicate_Method(const char* query_str,int* size);
-
-
-
-
-
-
-
-
-
-
-
+ErrorCode destroy_entry_index(Index* ix);
+void destroy_index_nodes(struct NodeIndex* node);
+struct Deduplicate_Hash_Array* Initialize_Hash_Array(int BucketsHashTable);
+void free_Deduplication_Hash_Array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable);
+void insert_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
 
 #ifdef __cplusplus
 }
