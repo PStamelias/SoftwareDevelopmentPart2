@@ -156,7 +156,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 		if(query_str[i]==' '){
 			word[len]='\0';
 			len=0;
-			if(search(Deduplication_Array,BucketsHashTable,word)==true){
+			if(search_hash_array(Deduplication_Array,BucketsHashTable,word)==true){
 				memset(word,0,MAX_WORD_LENGTH);
 				continue;
 			}
@@ -191,7 +191,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 			word[len++]=query_str[i];
 			word[len]='\0';
 			len=0;
-			if(search(Deduplication_Array,BucketsHashTable,word)==true){
+			if(search_hash_array(Deduplication_Array,BucketsHashTable,word)==true){
 				memset(word,0,MAX_WORD_LENGTH);
 				continue;
 			}
@@ -313,7 +313,7 @@ void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable
 	}	
 }
 
-bool search(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word){
+bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word){
 	int bucket_num=hashing(word)%BucketsHashTable;
 	int found=0;
 	struct Deduplicate_Node* start=hash->array[bucket_num];

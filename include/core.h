@@ -302,7 +302,7 @@ struct Deduplicate_Hash_Array* Initialize_Hash_Array(int BucketsHashTable);
 void free_Deduplication_Hash_Array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable);
 void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable,char* word);
 
-bool search(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
+bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
 
 
 #ifdef __cplusplus
