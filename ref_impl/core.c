@@ -166,8 +166,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 				BucketsHashTable=NextPrime(BucketsHashTable*2);
 				struct Deduplicate_Hash_Array* new_Deduplicate_Hash_Array=Initialize_Hash_Array(BucketsHashTable);
 				for(int j=0;j<old_bucket_num;j++){
-					if(Deduplication_Array->array[j]==NULL)
-						continue;
+					if(Deduplication_Array->array[j]==NULL) continue;
 					struct Deduplicate_Node* start=Deduplication_Array->array[j];
 					struct Deduplicate_Node* next_start=start->next;
 					while(1){
@@ -175,8 +174,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 						free(start->the_word);
 						free(start);
 						start=next_start;
-						if(start==NULL)
-							break;
+						if(start==NULL) break;
 						next_start=next_start->next;
 					}
 				}
@@ -203,8 +201,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 				BucketsHashTable=NextPrime(BucketsHashTable*2);
 				struct Deduplicate_Hash_Array* new_Deduplicate_Hash_Array=Initialize_Hash_Array(BucketsHashTable);
 				for(int j=0;j<old_bucket_num;j++){
-					if(Deduplication_Array->array[j]==NULL)
-						continue;
+					if(Deduplication_Array->array[j]==NULL) continue;
 					struct Deduplicate_Node* start=Deduplication_Array->array[j];
 					struct Deduplicate_Node* next_start=start->next;
 					while(1){
@@ -212,8 +209,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 						free(start->the_word);
 						free(start);
 						start=next_start;
-						if(start==NULL)
-							break;
+						if(start==NULL) break;
 						next_start=next_start->next;
 					}
 				}
@@ -238,8 +234,7 @@ char** Deduplicate_Method(const char* query_str,int* size){
 			strcpy(word_array[coun],start->the_word);
 			coun++;
 			start=start->next;
-			if(start==NULL)
-				break;
+			if(start==NULL) break;
 		}
 	}
 	*size=coun;
