@@ -17,18 +17,19 @@ unsigned int HammingDistance(char* a, int na, char* b, int nb)
 
 struct HammingDistanceStruct* HammingDistanceStructNode;
 Index*  BKTreeIndexEdit;
-Entry** HashTableExact;
+struct Exact_Root* HashTableExact;
 int bucket_sizeofHashTableExact;
 
 
 ErrorCode InitializeIndex(){
 	BKTreeIndexEdit=malloc(sizeof(Index));
 	HashTableExact=NULL;
-	bucket_sizeofHashTableExact=10;/*starting bucket size of hash array*/
-	HashTableExact=malloc(bucket_sizeofHashTableExact*sizeof(Entry*));
-	/*Hamming struct initilization*/
+	bucket_sizeofHashTableExact=5;/*starting bucket size of hash array*/
+	HashTableExact=malloc(sizeof(struct Exact_Root));
+	HashTableExact->array=malloc(bucket_sizeofHashTableExact*sizeof(struct Exact_Node*));
 	for(int i=0;i<bucket_sizeofHashTableExact;i++)
-		HashTableExact[i]=NULL;
+		HashTableExact->array[i]=NULL;
+	/*Hamming struct initilization*/
 	int HammingIndexSize=(MAX_WORD_LENGTH-MIN_WORD_LENGTH)+1;
 	HammingDistanceStructNode=NULL;
 	HammingDistanceStructNode=malloc(sizeof(struct HammingDistanceStruct));
@@ -38,35 +39,31 @@ ErrorCode InitializeIndex(){
 		HammingDistanceStructNode->word_RootPtrArray[i].word_length=4+i;
 	}
 	/*******************************/
-	if(BKTreeIndexEdit==NULL)
-		return EC_FAIL;
-	if(HashTableExact==NULL)
-		return EC_FAIL;
-	if(HammingDistanceStructNode==NULL)
-		return EC_FAIL;
+	if(BKTreeIndexEdit==NULL) return EC_FAIL;
+	if(HashTableExact==NULL) return EC_FAIL;
+	if(HammingDistanceStructNode==NULL) return EC_FAIL;
 	return EC_SUCCESS;
 }
 
 ErrorCode DestroyIndex(){
 	for(int i=0; i<bucket_sizeofHashTableExact; i++){
-		if(HashTableExact[i] == NULL){
-			continue;
-		}
-		Entry* start = HashTableExact[i];
-		Entry* start_next = start->next;
+		if(HashTableExact->array[i] == NULL) continue;
+		struct Exact_Node* start = HashTableExact->array[i];
+		struct Exact_Node* start_next = start->next;
 		while(1){
+			free(start->wd);
 			free(start);
 			start = start_next;
-			if(start == NULL){
-				break;
-			}
+			if(start == NULL) break;
 			start_next = start_next->next;
 		}
 	}
+	free(HashTableExact->array);
 	free(HashTableExact);
+	//call destroy gia to BKTree */
+	free(BKTreeIndexEdit);
 	free(HammingDistanceStructNode->word_RootPtrArray);
-	free(HammingDistanceStructNode);
-	
+	free(HammingDistanceStructNode);	
 	return EC_SUCCESS;
 }
 
@@ -74,11 +71,12 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 {
 	//printf("-----------------------------\n");
 	int words_num=0;
-	//char** words_ofquery=Deduplicate_Method(query_str,&words_num);
+	char** words_ofquery=Deduplicate_Method(query_str,&words_num);
 	for(int i=0;i<words_num;i++)
-		//printf("--%s\n",words_ofquery[i]);
-	//printf("-----------------------------\n");
+		printf("--%s\n",words_ofquery[i]);
+	printf("-----------------------------\n");
 	if(match_type==0){
+		Exact_Put(words_ofquery,words_num);
 		//printf("EXACT MATCH\n");
 	}
 	else if(match_type==1){
@@ -87,12 +85,12 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 	else if(match_type==2){
 		//printf("EDIT DISTANCE\n");
 	}
-	//for(int i=0;i<words_num;i++)
-	//	free(words_ofquery[i]);
-	//free(words_ofquery);
-	//words_ofquery=NULL;
-	//if(words_ofquery!=NULL)
-	//	return EC_FAIL;
+	for(int i=0;i<words_num;i++)
+		free(words_ofquery[i]);
+	free(words_ofquery);
+	words_ofquery=NULL;
+	if(words_ofquery!=NULL)
+		return EC_FAIL;
 	/*********************/
 	return EC_SUCCESS;
 }
@@ -105,13 +103,13 @@ ErrorCode EndQuery(QueryID query_id)
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	int words_num=0;
-	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
+	/*char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	printf("words_num=%d\n",words_num);
 	for(int i=0;i<words_num;i++)
 		printf("--%s\n",words_oftext[i]);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
-	free(words_oftext);
+	free(words_oftext);*/
 	return EC_SUCCESS;
 }
 
@@ -350,4 +348,86 @@ bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,
 	}
 	if(found==1) return true;
 	else return false;
+}
+
+
+void Exact_Put(char** words,int num){
+	for(int i=0;i<num;i++){
+		int bucket_num=hashing(words[i])%bucket_sizeofHashTableExact;
+		float load_factor=counting_load_factor(HashTableExact->entries_counter+1,bucket_sizeofHashTableExact);
+		if(load_factor>=0.8){
+			int old_size=bucket_sizeofHashTableExact;
+			bucket_sizeofHashTableExact=NextPrime(bucket_sizeofHashTableExact*2);
+			struct Exact_Root* NewHashTableExact=malloc(sizeof(struct Exact_Root));
+			NewHashTableExact->entries_counter=0;
+			bucket_num=hashing(words[i])%bucket_sizeofHashTableExact;
+			NewHashTableExact->array=NULL;
+			NewHashTableExact->array=malloc(bucket_sizeofHashTableExact*sizeof(struct Exact_Node*));
+			for(int j=0;j<bucket_sizeofHashTableExact;j++)
+				NewHashTableExact->array[j]=NULL;
+			for(int j=0;j<old_size;j++){
+				if(HashTableExact->array[j]==NULL) continue;
+				struct Exact_Node* start=HashTableExact->array[j];
+				struct Exact_Node* next_start=start->next;
+				while(1){
+					insert_HashTableExact_V2(NewHashTableExact,start->wd,bucket_num);
+					free(start->wd);
+					free(start);
+					start=next_start;
+					if(start==NULL) break;
+					next_start=next_start->next;
+				}
+			}
+			insert_HashTableExact_V2(NewHashTableExact,words[i],bucket_num);
+			free(HashTableExact->array);
+			free(HashTableExact);
+			HashTableExact=NewHashTableExact;
+		}
+		else insert_HashTableExact(words[i],bucket_num);
+	}
+}
+
+
+void insert_HashTableExact(const char* word,int bucket_num){
+	struct Exact_Node* node=NULL;
+	node=malloc(sizeof(struct Exact_Node));
+	node->next=NULL;
+	node->wd=NULL;
+	node->beg=NULL;
+	node->wd=malloc((strlen(word)+1)*sizeof(char));
+	strcpy(node->wd,word);
+	struct Exact_Node* start=HashTableExact->array[bucket_num];
+	if(start==NULL) HashTableExact->array[bucket_num]=node;
+	else{
+		while(1){
+			if(start->next==NULL){
+				start->next=node;
+				break;
+			}
+			start=start->next;
+		}
+	}
+	HashTableExact->entries_counter++;
+}
+
+
+void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num){
+	struct Exact_Node* node=malloc(sizeof(struct Exact_Node));
+	node->next=NULL;
+	node->wd=NULL;
+	node->beg=NULL;
+	node->wd=malloc((strlen(word)+1)*sizeof(char));
+	strcpy(node->wd,word);
+	struct Exact_Node* start=head->array[bucket_num];
+	if(start==NULL) head->array[bucket_num]=node;
+	else{
+		while(1){
+			if(start->next==NULL){
+				start->next=node;
+				break;
+			}
+			start=start->next;
+		}
+	}
+	head->entries_counter++;
 }

@@ -106,6 +106,7 @@ typedef struct entry_list{
 struct NodeIndex{
   word* wd;
   int distance;
+  payload_node* query_list;
   struct NodeIndex* next;
   struct NodeIndex* firstChild;
 };
@@ -124,9 +125,18 @@ struct word_RootPtr{
 struct HammingDistanceStruct{
     struct word_RootPtr* word_RootPtrArray;
 };
+struct Exact_Node{
+    word* wd;
+    payload_node* beg;
+    struct Exact_Node* next;
+};
+struct Exact_Root{
+    struct Exact_Node** array;
+    unsigned int entries_counter;
+};
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
 extern Index*  BKTreeIndexEdit;
-extern Entry** HashTableExact;
+extern struct Exact_Root* HashTableExact;
 extern int bucket_sizeofHashTableExact;
 
 /// Error codes:			
@@ -304,7 +314,9 @@ void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable
 
 bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
 
-
+void Exact_Put(char** words,int num);
+void insert_HashTableExact(const char* word,int bucket_num);
+void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num);
 #ifdef __cplusplus
 }
 #endif
