@@ -48,6 +48,25 @@ ErrorCode InitializeIndex(){
 }
 
 ErrorCode DestroyIndex(){
+	for(int i=0; i<bucket_sizeofHashTableExact; i++){
+		if(HashTableExact[i] == NULL){
+			continue;
+		}
+		Entry* start = HashTableExact[i];
+		Entry* start_next = start->next;
+		while(1){
+			free(start);
+			start = start_next;
+			if(start == NULL){
+				break;
+			}
+			start_next = start_next->next;
+		}
+	}
+	free(HashTableExact);
+	free(HammingDistanceStructNode->word_RootPtrArray);
+	free(HammingDistanceStructNode);
+	
 	return EC_SUCCESS;
 }
 
