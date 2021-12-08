@@ -111,7 +111,6 @@ ErrorCode EndQuery(QueryID query_id)
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
-	int words_num=0;
 	/*char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	printf("words_num=%d\n",words_num);
 	for(int i=0;i<words_num;i++)
@@ -463,7 +462,7 @@ bool check_if_word_exists(char* word,int bucket_num,QueryID query_id){
 			Pnode->next=NULL;
 			Pnode->query_id=query_id;
 			struct payload_node* s1=start->beg;
-			if(s1==NULL) s1=Pnode;
+			if(s1==NULL) start->beg=Pnode;
 			else{
 				while(1){
 					if(s1->next==NULL){
