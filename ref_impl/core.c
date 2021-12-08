@@ -51,6 +51,15 @@ ErrorCode DestroyIndex(){
 		struct Exact_Node* start = HashTableExact->array[i];
 		struct Exact_Node* start_next = start->next;
 		while(1){
+			struct payload_node* start1=start->beg;
+			struct payload_node* start2=start1->next;
+			while(1){
+				free(start1);
+				start1=start2;
+				if(start1==NULL)
+					break;
+				start2=start2->next;
+			}
 			free(start->wd);
 			free(start);
 			start = start_next;
@@ -76,8 +85,8 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 		printf("--%s\n",words_ofquery[i]);
 	printf("-----------------------------\n");
 	if(match_type==0){
-		Exact_Put(words_ofquery,words_num);
-		//printf("EXACT MATCH\n");
+		Exact_Put(words_ofquery,words_num,query_id);
+		printf("EXACT MATCH\n");
 	}
 	else if(match_type==1){
 		//printf("HAMMING DISTANCE\n");
@@ -351,14 +360,17 @@ bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,
 }
 
 
-void Exact_Put(char** words,int num){
+void Exact_Put(char** words,int num,QueryID query_id){
 	for(int i=0;i<num;i++){
 		int bucket_num=hashing(words[i])%bucket_sizeofHashTableExact;
+		bool val1=check_if_word_exists(words[i],bucket_num,query_id);
+		if(val1==true) continue;
 		float load_factor=counting_load_factor(HashTableExact->entries_counter+1,bucket_sizeofHashTableExact);
 		if(load_factor>=0.8){
 			int old_size=bucket_sizeofHashTableExact;
 			bucket_sizeofHashTableExact=NextPrime(bucket_sizeofHashTableExact*2);
 			struct Exact_Root* NewHashTableExact=malloc(sizeof(struct Exact_Root));
+			bucket_num=hashing(words[i])%bucket_sizeofHashTableExact;
 			NewHashTableExact->entries_counter=0;
 			bucket_num=hashing(words[i])%bucket_sizeofHashTableExact;
 			NewHashTableExact->array=NULL;
@@ -370,7 +382,8 @@ void Exact_Put(char** words,int num){
 				struct Exact_Node* start=HashTableExact->array[j];
 				struct Exact_Node* next_start=start->next;
 				while(1){
-					insert_HashTableExact_V2(NewHashTableExact,start->wd,bucket_num);
+					struct payload_node* ptr_beg=start->beg;
+					insert_HashTableExact_V2(NewHashTableExact,start->wd,bucket_num,ptr_beg);
 					free(start->wd);
 					free(start);
 					start=next_start;
@@ -378,17 +391,16 @@ void Exact_Put(char** words,int num){
 					next_start=next_start->next;
 				}
 			}
-			insert_HashTableExact_V2(NewHashTableExact,words[i],bucket_num);
 			free(HashTableExact->array);
 			free(HashTableExact);
 			HashTableExact=NewHashTableExact;
 		}
-		else insert_HashTableExact(words[i],bucket_num);
+		else insert_HashTableExact(words[i],bucket_num,query_id);
 	}
 }
 
 
-void insert_HashTableExact(const char* word,int bucket_num){
+void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id){
 	struct Exact_Node* node=NULL;
 	node=malloc(sizeof(struct Exact_Node));
 	node->next=NULL;
@@ -396,6 +408,11 @@ void insert_HashTableExact(const char* word,int bucket_num){
 	node->beg=NULL;
 	node->wd=malloc((strlen(word)+1)*sizeof(char));
 	strcpy(node->wd,word);
+	struct payload_node* Pnode=NULL;
+	Pnode=malloc(sizeof(struct payload_node));
+	Pnode->next=NULL;
+	Pnode->query_id=query_id;
+	node->beg=Pnode;
 	struct Exact_Node* start=HashTableExact->array[bucket_num];
 	if(start==NULL) HashTableExact->array[bucket_num]=node;
 	else{
@@ -411,11 +428,12 @@ void insert_HashTableExact(const char* word,int bucket_num){
 }
 
 
-void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num){
+void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,struct payload_node* payload_ptr){
 	struct Exact_Node* node=malloc(sizeof(struct Exact_Node));
 	node->next=NULL;
 	node->wd=NULL;
 	node->beg=NULL;
+	node->beg=payload_ptr;
 	node->wd=malloc((strlen(word)+1)*sizeof(char));
 	strcpy(node->wd,word);
 	struct Exact_Node* start=head->array[bucket_num];
@@ -430,4 +448,37 @@ void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num)
 		}
 	}
 	head->entries_counter++;
+}
+
+
+
+bool check_if_word_exists(char* word,int bucket_num,QueryID query_id){
+	struct Exact_Node* start=HashTableExact->array[bucket_num];
+	bool found=false;
+	if(start==NULL) return found;
+	while(1){
+		if(!strcmp(word,start->wd)){
+			struct payload_node* Pnode=NULL;
+			Pnode=malloc(sizeof(struct payload_node));
+			Pnode->next=NULL;
+			Pnode->query_id=query_id;
+			struct payload_node* s1=start->beg;
+			if(s1==NULL) s1=Pnode;
+			else{
+				while(1){
+					if(s1->next==NULL){
+						s1->next=Pnode;
+						break;
+					}
+					s1=s1->next;
+				}
+			}
+			found=true;
+			break;
+		}
+		start=start->next;
+		if(start==NULL)
+			break;
+	}
+	return found;
 }

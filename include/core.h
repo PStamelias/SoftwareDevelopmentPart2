@@ -314,9 +314,10 @@ void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable
 
 bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
 
-void Exact_Put(char** words,int num);
-void insert_HashTableExact(const char* word,int bucket_num);
-void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num);
+void Exact_Put(char** words,int num,QueryID query_id);
+bool check_if_word_exists(char* word,int bucket_num,QueryID query_id);
+void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id);
+void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,struct payload_node* payload_ptr);
 #ifdef __cplusplus
 }
 #endif
