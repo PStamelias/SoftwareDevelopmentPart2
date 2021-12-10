@@ -36,7 +36,7 @@ ErrorCode InitializeIndex(){
 	HammingDistanceStructNode=malloc(sizeof(struct HammingDistanceStruct));
 	HammingDistanceStructNode->word_RootPtrArray=malloc(HammingIndexSize*sizeof(struct word_RootPtr));
 	for(int i=0;i<HammingIndexSize;i++){
-		HammingDistanceStructNode->word_RootPtrArray[i].IndexPtr=NULL;
+		HammingDistanceStructNode->word_RootPtrArray[i].HammingPtr=NULL;
 		HammingDistanceStructNode->word_RootPtrArray[i].word_length=4+i;
 	}
 	/*******************************/
@@ -85,17 +85,12 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 	for(int i=0;i<words_num;i++)
 		printf("--%s\n",words_ofquery[i]);
 	printf("-----------------------------\n");
-	if(match_type==0){
+	if(match_type==0)
 		Exact_Put(words_ofquery,words_num,query_id);
-		printf("EXACT MATCH\n");
-	}
-	else if(match_type==1){
-		//printf("HAMMING DISTANCE\n");
-	}	
-	else if(match_type==2){
+	else if(match_type==1)
+		Hamming_Put(words_ofquery,words_num,query_id,match_dist);
+	else if(match_type==2)
 		Edit_Put(words_ofquery,words_num,query_id,match_dist);
-		//printf("EDIT DISTANCE\n");
-	}
 	for(int i=0;i<words_num;i++)
 		free(words_ofquery[i]);
 	free(words_ofquery);
@@ -110,6 +105,7 @@ ErrorCode EndQuery(QueryID query_id)
 {
 	/*check if query exists on ExactHashTable*/
 	Check_Exact_Hash_Array(query_id);
+	/*edw na prosthesw mia sinartisi pou na chakarei ean thelei o pinakas katakermatismou rehasing*/
 	return EC_SUCCESS;
 }
 
@@ -117,9 +113,9 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
-	printf("words_num=%d\n",words_num);
-	for(int i=0;i<words_num;i++)
-		printf("--%s\n",words_oftext[i]);
+	//printf("words_num=%d\n",words_num);
+	//for(int i=0;i<words_num;i++)
+	//	printf("--%s\n",words_oftext[i]);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
@@ -280,12 +276,12 @@ ErrorCode destroy_entry_index(Index* ix){
 	return EC_SUCCESS;
 }
 
-void destroy_index_nodes(struct NodeIndex* node){
-	for(struct NodeIndex* s=node->firstChild;s!=NULL;s=s->next){
+void destroy_index_nodes(struct EditNode* node){
+	/*for(struct NodeIndex* s=node->firstChild;s!=NULL;s=s->next){
 		destroy_index_nodes(s);
 	}
 	free(node->wd);
-	free(node);
+	free(node);*/
 }
 
 
@@ -551,15 +547,62 @@ void delete_specific_payload(struct Exact_Node* node,QueryID query_id){
 
 
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
-	for(int i=0;i<words_num;i++){
-		build_entry_index(words_ofquery[i],query_id);
-	}
+	for(int i=0;i<words_num;i++)
+		build_entry_index_Edit(words_ofquery[i],query_id,match_dist);
 }
 
 
-ErrorCode build_entry_index(char* word,QueryID query_id){
+ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist){
 	if(BKTreeIndexEdit->root==NULL){
 		struct EditNode* node=NULL;
+		node=malloc(sizeof(struct EditNode));
+		node->firstChild=NULL;
+		node->next=NULL;
+		node->distance=0;
+		node->wd=malloc((strlen(word)+1)*sizeof(char));
+		strcpy(node->wd,word);
+		node->start_info=NULL;
+		struct Info* info_node=malloc(sizeof(struct Info));
+		info_node->next=NULL;
+		info_node->query_id=query_id;
+		info_node->match_dist=match_dist;
+		node->start_info=info_node;
+		BKTreeIndexEdit->root=node;
+	}
+	else{
+
+	}	
+	return EC_SUCCESS;
+}
+
+
+
+void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
+	for(int i=0;i<words_num;i++)
+		build_entry_index_Hamming(words_ofquery[i],query_id,match_dist);
+}
+
+ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist){
+	int size_of_word=strlen(word);
+	int position_of_word=size_of_word-4;
+	printf("--%d\n",size_of_word);
+	struct word_RootPtr* word_ptr=&HammingDistanceStructNode->word_RootPtrArray[position_of_word];
+	printf("%d\n",word_ptr->word_length);
+	if(word_ptr->HammingPtr==NULL){
+		word_ptr->HammingPtr=malloc(sizeof(struct HammingIndex));
+		struct HammingNode* Hnode=NULL;
+		Hnode=malloc(sizeof(struct HammingNode));
+		Hnode->next=NULL;
+		Hnode->firstChild=NULL;
+		Hnode->distance=0;
+		Hnode->wd=malloc((strlen(word)+1)*sizeof(char));
+		strcpy(Hnode->wd,word);
+		struct Info* info_node=malloc(sizeof(struct Info));
+		info_node->next=NULL;
+		info_node->query_id=query_id;
+		info_node->match_dist=match_dist;
+		Hnode->start_info=info_node;
+		word_ptr->HammingPtr->root=Hnode;
 	}
 	else{
 

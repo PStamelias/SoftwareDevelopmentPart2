@@ -86,9 +86,13 @@ typedef struct payload_node{
     struct payload_node* next;
 }payload_node;
 typedef struct Index{
-  struct NodeIndex* root;
+  struct EditNode* root;
   bool type;
 }Index;
+struct HammingIndex{
+    struct HammingNode* root;
+    bool type;
+};
 struct Name_Info{
   struct Name_Info* next;
   struct Name* ptr;
@@ -120,7 +124,7 @@ struct Deduplicate_Hash_Array{
 };
 struct word_RootPtr{
     int word_length;
-    Index* IndexPtr;   
+    struct HammingIndex* HammingPtr;   
 };
 struct HammingDistanceStruct{
     struct word_RootPtr* word_RootPtrArray;
@@ -134,13 +138,21 @@ struct Exact_Node{
 struct Info{
     QueryID query_id;
     unsigned int match_dist;
+    struct Info* next;
 };
 struct EditNode{
   word* wd;
   int distance;
   struct Info* start_info;
-  struct NodeIndex* next;
-  struct NodeIndex* firstChild;
+  struct EditNode* next;
+  struct EditNode* firstChild;
+};
+struct HammingNode{
+  word* wd;
+  int distance;
+  struct Info* start_info;
+  struct HammingNode* next;
+  struct HammingNode* firstChild;
 };
 struct Exact_Root{
     struct Exact_Node** array;
@@ -304,13 +316,7 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 //*********************************************************************************************
 
 
-ErrorCode build_entry_index(char* word,QueryID query_id);
-
-
-
-
-
-
+ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist);
 
 
 
@@ -319,7 +325,7 @@ bool isPrime(int N);
 int hash_number_char(char* symbol,int buckets);
 char** Deduplicate_Method(const char* query_str,int* size);
 ErrorCode destroy_entry_index(Index* ix);
-void destroy_index_nodes(struct NodeIndex* node);
+void destroy_index_nodes(struct EditNode* node);
 struct Deduplicate_Hash_Array* Initialize_Hash_Array(int BucketsHashTable);
 void free_Deduplication_Hash_Array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable);
 void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable,char* word);
@@ -332,7 +338,9 @@ void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id);
 void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,struct payload_node* payload_ptr);
 bool empty_of_payload_nodes(struct Exact_Node* node);
 void Check_Exact_Hash_Array(QueryID query_id);
+ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist);
 void delete_specific_payload(struct Exact_Node* node,QueryID query_id);
+void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 #ifdef __cplusplus
 }
