@@ -129,6 +129,18 @@ struct Exact_Node{
     word* wd;
     payload_node* beg;
     struct Exact_Node* next;
+    struct Exact_Node* prev;
+};
+struct Info{
+    QueryID query_id;
+    unsigned int match_dist;
+};
+struct EditNode{
+  word* wd;
+  int distance;
+  struct Info* start_info;
+  struct NodeIndex* next;
+  struct NodeIndex* firstChild;
 };
 struct Exact_Root{
     struct Exact_Node** array;
@@ -292,7 +304,7 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 //*********************************************************************************************
 
 
-ErrorCode build_entry_index(const entry_list* el,MatchType type,Index** ix);
+ErrorCode build_entry_index(char* word,QueryID query_id);
 
 
 
@@ -318,6 +330,10 @@ void Exact_Put(char** words,int num,QueryID query_id);
 bool check_if_word_exists(char* word,int bucket_num,QueryID query_id);
 void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id);
 void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,struct payload_node* payload_ptr);
+bool empty_of_payload_nodes(struct Exact_Node* node);
+void Check_Exact_Hash_Array(QueryID query_id);
+void delete_specific_payload(struct Exact_Node* node,QueryID query_id);
+void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 #ifdef __cplusplus
 }
 #endif

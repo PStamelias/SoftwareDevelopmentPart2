@@ -23,6 +23,7 @@ int bucket_sizeofHashTableExact;
 
 ErrorCode InitializeIndex(){
 	BKTreeIndexEdit=malloc(sizeof(Index));
+	BKTreeIndexEdit->root=NULL;
 	HashTableExact=NULL;
 	bucket_sizeofHashTableExact=5;/*starting bucket size of hash array*/
 	HashTableExact=malloc(sizeof(struct Exact_Root));
@@ -92,6 +93,7 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 		//printf("HAMMING DISTANCE\n");
 	}	
 	else if(match_type==2){
+		Edit_Put(words_ofquery,words_num,query_id,match_dist);
 		//printf("EDIT DISTANCE\n");
 	}
 	for(int i=0;i<words_num;i++)
@@ -106,18 +108,21 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 
 ErrorCode EndQuery(QueryID query_id)
 {
+	/*check if query exists on ExactHashTable*/
+	Check_Exact_Hash_Array(query_id);
 	return EC_SUCCESS;
 }
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
-	/*char** words_oftext=Deduplicate_Method(doc_str,&words_num);
+	int words_num=0;
+	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	printf("words_num=%d\n",words_num);
 	for(int i=0;i<words_num;i++)
 		printf("--%s\n",words_oftext[i]);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
-	free(words_oftext);*/
+	free(words_oftext);
 	return EC_SUCCESS;
 }
 
@@ -128,9 +133,6 @@ ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_
 }
 
 
-ErrorCode build_entry_index(const entry_list* el,MatchType type,Index** ix){
-	return EC_SUCCESS;
-}
 
 
 int NextPrime(int N)
@@ -399,11 +401,14 @@ void Exact_Put(char** words,int num,QueryID query_id){
 }
 
 
+
+
 void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id){
 	struct Exact_Node* node=NULL;
 	node=malloc(sizeof(struct Exact_Node));
 	node->next=NULL;
 	node->wd=NULL;
+	node->prev=NULL;
 	node->beg=NULL;
 	node->wd=malloc((strlen(word)+1)*sizeof(char));
 	strcpy(node->wd,word);
@@ -418,6 +423,7 @@ void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id){
 		while(1){
 			if(start->next==NULL){
 				start->next=node;
+				node->prev=start;
 				break;
 			}
 			start=start->next;
@@ -431,6 +437,7 @@ void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,
 	struct Exact_Node* node=malloc(sizeof(struct Exact_Node));
 	node->next=NULL;
 	node->wd=NULL;
+	node->prev=NULL;
 	node->beg=NULL;
 	node->beg=payload_ptr;
 	node->wd=malloc((strlen(word)+1)*sizeof(char));
@@ -441,6 +448,7 @@ void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,
 		while(1){
 			if(start->next==NULL){
 				start->next=node;
+				node->prev=start;
 				break;
 			}
 			start=start->next;
@@ -480,4 +488,81 @@ bool check_if_word_exists(char* word,int bucket_num,QueryID query_id){
 			break;
 	}
 	return found;
+}
+
+
+void Check_Exact_Hash_Array(QueryID query_id){
+	for(int i=0;i<bucket_sizeofHashTableExact;i++){
+		struct Exact_Node* start=HashTableExact->array[i];
+		if(start==NULL) continue;
+		while(1){
+			delete_specific_payload(start,query_id);
+			bool val=empty_of_payload_nodes(start);
+			if(val==true){
+				if(start==HashTableExact->array[i]){
+					HashTableExact->array[i]=start->next;
+					start->next->prev=NULL;
+					free(start);
+				}
+				else{
+					start->prev->next=start->next;
+					free(start);
+				}
+			}
+			if(start==NULL)
+				break;
+			start=start->next;
+		}
+	}
+}
+
+
+
+bool empty_of_payload_nodes(struct Exact_Node* node){
+	if(node->beg==NULL) return true;
+	else return false;
+}
+
+void delete_specific_payload(struct Exact_Node* node,QueryID query_id){
+	struct payload_node* s1=node->beg;
+	struct payload_node* s1_next=s1->next;
+	if(s1->query_id==query_id){
+		node->beg=s1_next;
+		free(s1);
+	}
+	else{
+		while(1){
+			if(s1_next->query_id==query_id){
+				s1->next=s1_next->next;
+				free(s1_next);
+				break;
+			}
+			s1=s1_next;
+			if(s1==NULL)
+				break;
+			s1_next=s1_next->next;
+		}
+	}
+}
+
+
+
+
+
+
+void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
+	for(int i=0;i<words_num;i++){
+		build_entry_index(words_ofquery[i],query_id);
+	}
+}
+
+
+ErrorCode build_entry_index(char* word,QueryID query_id){
+	if(BKTreeIndexEdit->root==NULL){
+		struct EditNode* node=NULL;
+	}
+	else{
+
+	}
+	return EC_SUCCESS;
 }
