@@ -342,6 +342,11 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 void delete_specific_payload(struct Exact_Node* node,QueryID query_id);
 void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
+
+void Check_Edit_BKTree(QueryID query_id);
+void Check_Hamming_BKTrees(QueryID query_id);
+
+
 #ifdef __cplusplus
 }
 #endif

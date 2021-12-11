@@ -105,6 +105,10 @@ ErrorCode EndQuery(QueryID query_id)
 {
 	/*check if query exists on ExactHashTable*/
 	Check_Exact_Hash_Array(query_id);
+	/*check if query exists on EditBKTree*/
+	Check_Edit_BKTree(query_id);
+	/*check if query exists on HammingBKTrees*/
+	Check_Hamming_BKTrees(query_id);
 	/*edw na prosthesw mia sinartisi pou na chakarei ean thelei o pinakas katakermatismou rehasing*/
 	return EC_SUCCESS;
 }
@@ -113,9 +117,6 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
-	//printf("words_num=%d\n",words_num);
-	//for(int i=0;i<words_num;i++)
-	//	printf("--%s\n",words_oftext[i]);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
@@ -125,6 +126,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
 {
+
 	return EC_SUCCESS;
 }
 
@@ -277,11 +279,7 @@ ErrorCode destroy_entry_index(Index* ix){
 }
 
 void destroy_index_nodes(struct EditNode* node){
-	/*for(struct NodeIndex* s=node->firstChild;s!=NULL;s=s->next){
-		destroy_index_nodes(s);
-	}
-	free(node->wd);
-	free(node);*/
+	
 }
 
 
@@ -570,6 +568,68 @@ ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_
 		BKTreeIndexEdit->root=node;
 	}
 	else{
+		struct EditNode* curr_node=BKTreeIndexEdit->root;
+		while(1){
+			int distance=0;
+			distance=EditDistance(curr_node->wd,strlen(curr_node->wd),word,strlen(word));
+			if(distance==0){
+				struct Info* info_node=malloc(sizeof(struct Info));
+				info_node->next=NULL;
+				info_node->query_id=query_id;
+				info_node->match_dist=match_dist;
+				struct Info* start_Infonode=curr_node->start_info;
+				if(start_Infonode==NULL)
+					curr_node->start_info=info_node;
+				else{
+					while(1){
+						if(start_Infonode->next==NULL){
+							start_Infonode->next=info_node;
+							break;
+						}
+						start_Infonode=start_Infonode->next;
+					}			
+				}
+				break;
+			}
+			int found=0;
+			struct EditNode* target=NULL;
+			for(struct EditNode* c=curr_node->firstChild;c!=NULL;c=c->next){
+				if(distance==c->distance){
+					found=1;
+					target=c;
+					break;
+				}
+			}
+			if(found==1){
+				curr_node=target;
+				continue;
+			}
+			struct EditNode* new_node=malloc(sizeof(struct EditNode));
+			new_node->next=NULL;
+			new_node->firstChild=NULL;
+			new_node->distance=distance;
+			new_node->wd=NULL;
+			new_node->wd=malloc((strlen(word)+1)*sizeof(char));
+			strcpy(new_node->wd,word);
+			struct Info* info_node=malloc(sizeof(struct Info));
+			info_node->next=NULL;
+			info_node->query_id=query_id;
+			info_node->match_dist=match_dist;
+			new_node->start_info=info_node;
+			struct EditNode* c=curr_node->firstChild;
+			if(c==NULL)
+				curr_node->firstChild=new_node;
+			else{
+				while(1){
+					if(c->next==NULL){
+						c->next=new_node;
+						break;
+					}
+					c=c->next;
+				}	
+			}
+			break;
+		}
 
 	}	
 	return EC_SUCCESS;
@@ -605,7 +665,78 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 		word_ptr->HammingPtr->root=Hnode;
 	}
 	else{
-
+		struct HammingNode* curr_node=word_ptr->HammingPtr->root;
+		while(1){
+			int distance=0;
+			distance=HammingDistance(curr_node->wd,strlen(curr_node->wd),word,strlen(word));
+			if(distance==0){
+				struct Info* info_node=malloc(sizeof(struct Info));
+				info_node->next=NULL;
+				info_node->query_id=query_id;
+				info_node->match_dist=match_dist;
+				struct Info* start_Infonode=curr_node->start_info;
+				if(start_Infonode==NULL)
+					curr_node->start_info=info_node;
+				else{
+					while(1){
+						if(start_Infonode->next==NULL){
+							start_Infonode->next=info_node;
+							break;
+						}
+						start_Infonode=start_Infonode->next;
+					}			
+				}
+				break;
+			}
+			int found=0;
+			struct HammingNode* target=NULL;
+			for(struct HammingNode* c=curr_node->firstChild;c!=NULL;c=c->next){
+				if(distance==c->distance){
+					found=1;
+					target=c;
+					break;
+				}
+			}
+			if(found==1){
+				curr_node=target;
+				continue;
+			}
+			struct HammingNode* new_node=malloc(sizeof(struct HammingNode));
+			new_node->next=NULL;
+			new_node->firstChild=NULL;
+			new_node->distance=distance;
+			new_node->wd=NULL;
+			new_node->wd=malloc((strlen(word)+1)*sizeof(char));
+			strcpy(new_node->wd,word);
+			struct Info* info_node=malloc(sizeof(struct Info));
+			info_node->next=NULL;
+			info_node->query_id=query_id;
+			info_node->match_dist=match_dist;
+			new_node->start_info=info_node;
+			struct HammingNode* c=curr_node->firstChild;
+			if(c==NULL)
+				curr_node->firstChild=new_node;
+			else{
+				while(1){
+					if(c->next==NULL){
+						c->next=new_node;
+						break;
+					}
+					c=c->next;
+				}	
+			}
+			break;
+		}
 	}
 	return EC_SUCCESS;
+}
+
+
+void Check_Edit_BKTree(QueryID query_id){
+
+}
+
+
+void Check_Hamming_BKTrees(QueryID query_id){
+
 }
