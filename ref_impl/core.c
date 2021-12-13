@@ -81,21 +81,21 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 {
 	//printf("-----------------------------\n");
 	int words_num=0;
-	char** words_ofquery=Deduplicate_Method(query_str,&words_num);
+	char** query_words=words_ofquery(query_str,&words_num);
 	for(int i=0;i<words_num;i++)
-		printf("--%s\n",words_ofquery[i]);
-	printf("-----------------------------\n");
+		printf("----%s\n",query_words[i]);
+	printf("------------------------------------------------------\n");
 	if(match_type==0)
-		Exact_Put(words_ofquery,words_num,query_id);
+		Exact_Put(query_words,words_num,query_id);
 	else if(match_type==1)
-		Hamming_Put(words_ofquery,words_num,query_id,match_dist);
+		Hamming_Put(query_words,words_num,query_id,match_dist);
 	else if(match_type==2)
-		Edit_Put(words_ofquery,words_num,query_id,match_dist);
+		Edit_Put(query_words,words_num,query_id,match_dist);
 	for(int i=0;i<words_num;i++)
-		free(words_ofquery[i]);
-	free(words_ofquery);
-	words_ofquery=NULL;
-	if(words_ofquery!=NULL)
+		free(query_words[i]);
+	free(query_words);
+	query_words=NULL;
+	if(query_words!=NULL)
 		return EC_FAIL;
 	/*********************/
 	return EC_SUCCESS;
@@ -733,10 +733,105 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 
 
 void Check_Edit_BKTree(QueryID query_id){
-
+	struct EditNode* beg_node=BKTreeIndexEdit->root;
+	Delete_Query_from_Edit_Nodes(beg_node,query_id);		
 }
 
+void Delete_Query_from_Edit_Nodes(struct EditNode* node,QueryID query_id){
+	for(struct EditNode* child=node->firstChild;child!=NULL;child=child->next)
+		Delete_Query_from_Edit_Nodes(child,query_id);
+	struct Info* info_node=node->start_info;
+	if(info_node==NULL)
+		return ;
+	if(info_node->query_id==query_id){
+		struct Info* delete_node=info_node;
+		info_node=info_node->next;
+		free(delete_node);
+	}
+	else{
+		struct Info* info_node=node->start_info;
+		struct Info* next_node=node->start_info->next;
+		if(next_node==NULL)
+			return ;
+		while(1){
+			if(next_node->query_id==query_id){
+				info_node->next=next_node->next;
+				free(next_node);
+			}
+			info_node=next_node;
+			if(info_node==NULL)
+				break;
+			next_node=next_node->next;
+		}
+	}
+}
 
 void Check_Hamming_BKTrees(QueryID query_id){
+	int HammingIndexSize=(MAX_WORD_LENGTH-MIN_WORD_LENGTH)+1;
+	for(int i=0;i<HammingIndexSize;i++){
+		Delete_Query_from_Hamming_Nodes(HammingDistanceStructNode->word_RootPtrArray[i].HammingPtr->root,query_id);
+	}
+}
 
+void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id){
+	for(struct HammingNode* child=node->firstChild;child!=NULL;child=child->next)
+		Delete_Query_from_Hamming_Nodes(child,query_id);
+	struct Info* info_node=node->start_info;
+	if(info_node==NULL)
+		return ;
+	if(info_node->query_id==query_id){
+		struct Info* delete_node=info_node;
+		info_node=info_node->next;
+		free(delete_node);
+	}
+	else{
+		struct Info* info_node=node->start_info;
+		struct Info* next_node=node->start_info->next;
+		if(next_node==NULL)
+			return ;
+		while(1){
+			if(next_node->query_id==query_id){
+				info_node->next=next_node->next;
+				free(next_node);
+			}
+			info_node=next_node;
+			if(info_node==NULL)
+				break;
+			next_node=next_node->next;
+		}
+	}
+}
+
+char** words_ofquery(const char* query_str,int* num){
+	char curr_words[5][MAX_WORD_LENGTH];
+	int coun=0;
+	char word[MAX_WORD_LENGTH];
+	int len=0;
+	for(int i=0;i<strlen(query_str);i++){
+		if(query_str[i]==' '){
+			word[len]='\0';
+			len=0;
+			strcpy(curr_words[coun],word);
+			coun++;
+			memset(word,0,MAX_WORD_LENGTH);
+			continue;
+		}
+		if(i==strlen(query_str)-1){
+			word[len++]=query_str[i];
+			word[len]='\0';
+			len=0;
+			strcpy(curr_words[coun],word);
+			coun++;
+			memset(word,0,MAX_WORD_LENGTH);
+			continue;
+		}
+		word[len++]=query_str[i];
+	}
+	char** returning_array=malloc(coun*sizeof(char*));
+	for(int i=0;i<coun;i++)
+		returning_array[i]=malloc(MAX_WORD_LENGTH*sizeof(char));
+	for(int i=0;i<coun;i++)
+		strcpy(returning_array[i],curr_words[i]);
+	*num=coun;
+	return returning_array;
 }

@@ -114,6 +114,17 @@ struct NodeIndex{
   struct NodeIndex* next;
   struct NodeIndex* firstChild;
 };
+struct result{
+    DocID doc_id;
+    int result_counter;
+    QueryID* query_id;
+    struct result* next;
+};
+struct Stack_result{
+    struct result* first;
+    struct result* top; 
+    int counter;
+};
 struct Deduplicate_Node{
     word* the_word;
     struct Deduplicate_Node* next;
@@ -158,6 +169,8 @@ struct Exact_Root{
     struct Exact_Node** array;
     unsigned int entries_counter;
 };
+
+
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
 extern Index*  BKTreeIndexEdit;
 extern struct Exact_Root* HashTableExact;
@@ -342,10 +355,11 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 void delete_specific_payload(struct Exact_Node* node,QueryID query_id);
 void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
-
+void Delete_Query_from_Edit_Nodes(struct EditNode* node,QueryID query_id);
 void Check_Edit_BKTree(QueryID query_id);
 void Check_Hamming_BKTrees(QueryID query_id);
-
+void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id);
+char** words_ofquery(const char* query_str,int* num);
 
 #ifdef __cplusplus
 }
