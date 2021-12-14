@@ -1028,5 +1028,9 @@ void Delete_Result_List(Entry* en){
 
 
 QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int num2,int num3,int* result_counter){
+	int sum=num1+num2+num3;
+	float curr_size=sum/0.8;
+	int size=(int)curr_size;
+	size=NextPrime(size);
 	return NULL;
 }
