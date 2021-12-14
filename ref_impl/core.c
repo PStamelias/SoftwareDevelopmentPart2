@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
-#define PRIME 401
 int EditDistance(char* a, int na, char* b, int nb)
 {
 	return 0;
@@ -15,13 +14,18 @@ unsigned int HammingDistance(char* a, int na, char* b, int nb)
 	return 0;
 }
 
+
 struct HammingDistanceStruct* HammingDistanceStructNode;
 Index*  BKTreeIndexEdit;
+struct Query_Info* ActiveQueries;
 struct Exact_Root* HashTableExact;
 int bucket_sizeofHashTableExact;
+unsigned int active_queries;
 
 
 ErrorCode InitializeIndex(){
+	active_queries=0;
+	ActiveQueries=NULL;
 	BKTreeIndexEdit=malloc(sizeof(Index));
 	BKTreeIndexEdit->root=NULL;
 	HashTableExact=NULL;
@@ -79,12 +83,14 @@ ErrorCode DestroyIndex(){
 
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
+	active_queries++;
 	//printf("-----------------------------\n");
 	int words_num=0;
 	char** query_words=words_ofquery(query_str,&words_num);
+	Put_query_on_Active_Queries(query_id,words_num);
 	for(int i=0;i<words_num;i++)
-		printf("----%s\n",query_words[i]);
-	printf("------------------------------------------------------\n");
+		//printf("----%s\n",query_words[i]);
+	//printf("------------------------------------------------------\n");
 	if(match_type==0)
 		Exact_Put(query_words,words_num,query_id);
 	else if(match_type==1)
@@ -103,13 +109,14 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 
 ErrorCode EndQuery(QueryID query_id)
 {
+	active_queries--;
+	Delete_Query_from_Active_Queries(query_id);
 	/*check if query exists on ExactHashTable*/
 	Check_Exact_Hash_Array(query_id);
 	/*check if query exists on EditBKTree*/
 	Check_Edit_BKTree(query_id);
 	/*check if query exists on HammingBKTrees*/
 	Check_Hamming_BKTrees(query_id);
-	/*edw na prosthesw mia sinartisi pou na chakarei ean thelei o pinakas katakermatismou rehasing*/
 	return EC_SUCCESS;
 }
 
@@ -117,6 +124,22 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
+	Entry* exact_list=NULL;
+	Entry* edit_list=NULL;
+	Entry* hamming_list=NULL;
+	int num1=0;
+	int num2=0;
+	int num_result=0;
+	int num3=0;
+	for(int i=0;i<words_num;i++){
+		exact_list=Exact_Result(words_oftext[i],&num1);
+		edit_list=Edit_Result(words_oftext[i],&num2);
+		hamming_list=Hamming_Result(words_oftext[i],&num3);
+	}
+	QueryID* query_id_result=Put_On_Result_Hash_Array(exact_list,edit_list,hamming_list,num1,num2,num3,&num_result);
+	Delete_Result_List(exact_list);
+	Delete_Result_List(edit_list);
+	Delete_Result_List(hamming_list);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
@@ -525,6 +548,8 @@ void delete_specific_payload(struct Exact_Node* node,QueryID query_id){
 		free(s1);
 	}
 	else{
+		if(s1_next==NULL)
+			return ;
 		while(1){
 			if(s1_next->query_id==query_id){
 				s1->next=s1_next->next;
@@ -645,9 +670,9 @@ void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned in
 ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist){
 	int size_of_word=strlen(word);
 	int position_of_word=size_of_word-4;
-	printf("--%d\n",size_of_word);
+	//printf("--%d\n",size_of_word);
 	struct word_RootPtr* word_ptr=&HammingDistanceStructNode->word_RootPtrArray[position_of_word];
-	printf("%d\n",word_ptr->word_length);
+	//printf("%d\n",word_ptr->word_length);
 	if(word_ptr->HammingPtr==NULL){
 		word_ptr->HammingPtr=malloc(sizeof(struct HammingIndex));
 		struct HammingNode* Hnode=NULL;
@@ -834,4 +859,174 @@ char** words_ofquery(const char* query_str,int* num){
 		strcpy(returning_array[i],curr_words[i]);
 	*num=coun;
 	return returning_array;
+}
+
+
+ErrorCode create_entry_list(entry_list** el){
+	if(*el!=NULL)
+		return EC_FAIL;
+	entry_list* node=malloc(sizeof(entry_list));
+	node->first_node=NULL;
+	node->current_node=NULL;
+	node->counter=0;
+	*el=node;
+	return EC_SUCCESS;
+
+}
+
+
+Entry*  Exact_Result(char* word,int* num1){
+	Entry* beg_ptr=NULL;
+	int coun=0;
+	for(int i=0;i<bucket_sizeofHashTableExact;i++){
+		struct Exact_Node* start=HashTableExact->array[i];
+		if(start==NULL)
+			continue;
+		while(1){
+			if(!strcmp(start->wd,word)){
+				coun++;
+				Entry* en=Put_data(start);
+				//printf("%s\n",en->my_word);
+				if(beg_ptr==NULL)
+					beg_ptr=en;
+				else{
+					Entry* s1=beg_ptr;
+					while(1){
+						if(s1->next==NULL){
+							s1->next=en;
+							break;
+						}
+						s1=s1->next;
+					}
+				}
+			}
+			start=start->next;
+			if(start==NULL)
+				break;
+		}
+	}
+	*num1=coun;
+	return beg_ptr;
+}
+
+Entry* Put_data(struct Exact_Node* node){
+	Entry* en=malloc(sizeof(Entry));
+	en->next=NULL;
+	en->my_word=malloc((strlen(node->wd)+1)*sizeof(char));
+	strcpy(en->my_word,node->wd);
+	en->payload=NULL;
+	payload_node* start1=node->beg;
+	while(1){
+		if(start1==NULL)
+			break;
+		payload_node* pnode=malloc(sizeof(payload_node));
+		pnode->next=NULL;
+		pnode->query_id=start1->query_id;
+		if(en->payload==NULL)
+			en->payload=pnode;
+		else{
+			payload_node* s2=en->payload;
+			while(1){
+				if(s2->next==NULL){
+					s2->next=pnode;
+					break;
+				}
+				s2=s2->next;
+			}
+		}
+		start1=start1->next;
+	}
+	return en;
+}
+
+
+Entry* Edit_Result(char* word,int* num){
+	return NULL;
+}
+
+Entry* Hamming_Result(char* word,int* num){
+	return NULL;
+}
+
+
+
+void Delete_Query_from_Active_Queries(QueryID query_id){
+	struct Query_Info* start=ActiveQueries;
+	if(start->query_id==query_id){
+		struct Query_Info* query_node=start->next;
+		free(start);
+		start=query_node;
+		return;
+	}
+	struct Query_Info* next_start=ActiveQueries->next;
+	while(1){
+		if(next_start->query_id==query_id){
+			start->next=next_start->next;
+			free(next_start);
+		}
+		start=next_start;
+		if(start==NULL)
+			break;
+		next_start=next_start->next;
+	}
+}
+
+void Put_query_on_Active_Queries(QueryID query_id,int words_num){
+	struct Query_Info* start=ActiveQueries;
+	struct Query_Info* node=malloc(sizeof(struct Query_Info));
+	node->next=NULL;
+	node->counter_of_distinct_words=words_num;
+	if(start==NULL){
+		start=node;
+		return ;
+	}
+	while(1){
+		if(start->next==NULL){
+			start->next=node;
+			break;
+		}
+		start=start->next;
+	}
+}
+
+
+
+unsigned int hash_interger(unsigned int x){
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+
+
+void Delete_Result_List(Entry* en){
+	Entry* start1=en;
+	if(en==NULL)
+		return ;
+	Entry* start1_next=en->next;
+	while(1){
+		payload_node* k1=start1->payload;
+		payload_node* k2=k1->next;
+		while(1){
+			free(k1);
+			k1=k2;
+			if(k1==NULL)
+				break;
+			k2=k2->next;
+		}
+		free(start1->my_word);
+		free(start1);
+		start1=start1_next;
+		if(start1==NULL)
+			break;
+		start1_next=start1_next->next;
+	}
+}
+
+
+
+
+QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int num2,int num3,int* result_counter){
+	return NULL;
 }

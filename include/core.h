@@ -116,7 +116,7 @@ struct NodeIndex{
 };
 struct result{
     DocID doc_id;
-    int result_counter;
+    unsigned int result_counter;
     QueryID* query_id;
     struct result* next;
 };
@@ -151,6 +151,11 @@ struct Info{
     unsigned int match_dist;
     struct Info* next;
 };
+struct Query_Info{
+    QueryID query_id;
+    unsigned int counter_of_distinct_words;
+    struct Query_Info* next;
+};
 struct EditNode{
   word* wd;
   int distance;
@@ -169,7 +174,6 @@ struct Exact_Root{
     struct Exact_Node** array;
     unsigned int entries_counter;
 };
-
 
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
 extern Index*  BKTreeIndexEdit;
@@ -328,11 +332,14 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
 
-
+Entry* Put_data(struct Exact_Node* node);
 ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist);
-
-
-
+unsigned int hash_interger(unsigned int x);
+Entry* Exact_Result(char* word,int* num);
+Entry* Edit_Result(char* word,int* num);
+ErrorCode create_entry_list(entry_list** el);
+Entry* Hamming_Result(char* word,int* num);
+void Delete_Query_from_Active_Queries(QueryID query_id);
 int NextPrime(int N);
 bool isPrime(int N);
 int hash_number_char(char* symbol,int buckets);
@@ -342,9 +349,7 @@ void destroy_index_nodes(struct EditNode* node);
 struct Deduplicate_Hash_Array* Initialize_Hash_Array(int BucketsHashTable);
 void free_Deduplication_Hash_Array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable);
 void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable,char* word);
-
 bool search_hash_array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable,char* word);
-
 void Exact_Put(char** words,int num,QueryID query_id);
 bool check_if_word_exists(char* word,int bucket_num,QueryID query_id);
 void insert_HashTableExact(const char* word,int bucket_num,QueryID query_id);
@@ -360,6 +365,10 @@ void Check_Edit_BKTree(QueryID query_id);
 void Check_Hamming_BKTrees(QueryID query_id);
 void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id);
 char** words_ofquery(const char* query_str,int* num);
+QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int num2,int num3,int* result_counter);
+void Put_query_on_Active_Queries(QueryID query_id,int words_num);
+Entry* Merge_List(Entry* a,Entry* b,Entry* c);
+void Delete_Result_List(Entry* en);
 
 #ifdef __cplusplus
 }
