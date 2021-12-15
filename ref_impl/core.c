@@ -161,6 +161,7 @@ ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_
 	QueryID* curr=malloc(StackArray->top->result_counter*sizeof(QueryID));
 	for(int i=0;i<StackArray->top->result_counter;i++)
 		curr[i]=StackArray->top->query_id[i];
+	*p_query_ids=curr;
 	Delete_From_Stack();
 	return EC_SUCCESS;
 }
