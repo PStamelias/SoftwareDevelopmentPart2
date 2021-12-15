@@ -4,14 +4,52 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
+
+//used in EditDistance below
+int min(int a, int b, int c){
+    int m = a;
+    if(b<m){
+        m = b;
+    }
+    if(c<m){
+        m = c;
+    }
+    return m;
+}
+
 int EditDistance(char* a, int na, char* b, int nb)
 {
-	return 0;
+	int table[na+1][nb+1];
+    int i,j;
+    for(i=0; i<=na; i++){
+        for(j=0; j<=nb; j++){
+            if(i == 0){
+                table[i][j] = j;
+            }
+            else if(j == 0){
+                table[i][j] = i;
+            }
+            else if(a[i-1] == b[j-1]){
+                table[i][j] = table[i-1][j-1];
+            }
+            else{
+                table[i][j] = 1 + min(table[i-1][j], table[i][j-1], table[i-1][j-1]);
+            }
+        }
+    }
+    return table[na][nb];
 }
 
 unsigned int HammingDistance(char* a, int na, char* b, int nb)
 {
-	return 0;
+	int i;
+	int distance = 0;
+	for(i=0; i<na; i++){
+		if(a[i] != b[i]){
+			distance++;
+		}
+	}
+	return distance;
 }
 
 
