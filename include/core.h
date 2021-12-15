@@ -52,6 +52,9 @@ extern "C" {
 /// Maximum query length in characters.
 #define MAX_QUERY_LENGTH ((MAX_WORD_LENGTH+1)*MAX_QUERY_WORDS)
 
+///Maximum Matching Distance
+#define MAX_MATCH_DIST 3
+
 
 /// Query ID type.
 typedef unsigned int QueryID;
@@ -183,6 +186,11 @@ struct HammingNode{
 struct Exact_Root{
     struct Exact_Node** array;
     unsigned int entries_counter;
+};
+
+struct Stack_Node{
+    struct EditNode* node;
+    struct EditNode* next;
 };
 
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
@@ -342,6 +350,9 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //*********************************************************************************************
 
+int min(int, int, int);
+void push_stack(struct Stack_Node**, struct EditNode**);
+struct EditNode* pop_stack(struct Stack_Node**);
 Entry* Put_data(struct Exact_Node* node);
 ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist);
 unsigned int hash_interger(unsigned int x);

@@ -990,9 +990,74 @@ Entry* Put_data(struct Exact_Node* node){
 	return en;
 }
 
+void push_stack(struct Stack_Node** list, struct EditNode** n){
+    struct Stack_Node* temp = malloc(sizeof(struct EditNode));
+    temp->node = *n;
+    temp->next = *list;
+    *list = temp;
+}
+struct EditNode* pop_stack(struct Stack_Node** list){
+    struct Stack_Node* temp = *list;
+    struct EditNode* ret = (*list)->node;
+    *list = (*list)->next;
+    free(temp);
+    return ret;
+}
 
 Entry* Edit_Result(char* word,int* num){
-	return NULL;
+	if(BKTreeIndexEdit == NULL){
+		return NULL;
+	}
+	if(BKTreeIndexEdit->root == NULL){
+		return NULL;
+	}
+	int d, bot, ceil;
+	Entry* result_list = NULL;
+	Entry* new_entry = result_list;
+	struct EditNode* curr;
+	struct Stack_Node* candidate_list = NULL;
+	push_stack(&candidate_list, &(BKTreeIndexEdit->root));
+	struct EditNode* children = NULL;
+	struct Info* info;
+	while(candidate_list != NULL){
+		curr = pop_stack(&candidate_list);
+		info = curr->start_info;
+		d = EditDistance(word, strlen(word), curr->wd, strlen(curr->wd));
+		while(info != NULL){
+			if(d <= info->match_dist){
+				if(new_entry == NULL){
+					(*num)++;
+					new_entry = malloc(sizeof(Entry));
+					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
+					strcpy(new_entry->my_word, word);
+					new_entry->payload = malloc(sizeof(payload_node));
+					new_entry->payload ->query_id = info->query_id;
+				}
+				else{
+					new_entry->payload->next = malloc(sizeof(payload_node));
+					new_entry->payload->query_id = info->query_id;
+				}
+			}
+			info = info->next;
+		}
+		if(new_entry != NULL){
+			new_entry = new_entry->next;
+		}
+		if(d <= MAX_MATCH_DIST){
+			bot = MAX_MATCH_DIST - d;
+		}else{
+			bot = d - MAX_MATCH_DIST;
+		}
+		ceil = d + MAX_MATCH_DIST;
+		children = curr->firstChild;
+		while(children != NULL){
+			if(children->distance >= bot && children->distance <= ceil){
+				push_stack(&candidate_list, &children);
+			}
+			children = children->next;
+		}
+	}
+	return result_list;
 }
 
 Entry* Hamming_Result(char* word,int* num){
