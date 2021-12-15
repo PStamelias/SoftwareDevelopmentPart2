@@ -90,11 +90,9 @@ typedef struct payload_node{
 }payload_node;
 typedef struct Index{
   struct EditNode* root;
-  bool type;
 }Index;
 struct HammingIndex{
     struct HammingNode* root;
-    bool type;
 };
 struct Name_Info{
   struct Name_Info* next;
@@ -188,9 +186,14 @@ struct Exact_Root{
     unsigned int entries_counter;
 };
 
-struct Stack_Node{
+struct Edit_Stack_Node{
     struct EditNode* node;
     struct EditNode* next;
+};
+
+struct Hamming_Stack_Node{
+    struct HammingNode* node;
+    struct HammingNode* next;
 };
 
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
@@ -351,8 +354,10 @@ ErrorCode GetNextAvailRes(DocID*         p_doc_id,
 //*********************************************************************************************
 
 int min(int, int, int);
-void push_stack(struct Stack_Node**, struct EditNode**);
-struct EditNode* pop_stack(struct Stack_Node**);
+void push_stack_edit(struct Edit_Stack_Node**, struct EditNode**);
+struct EditNode* pop_stack_edit(struct Edit_Stack_Node**);
+void push_stack_hamming(struct Hamming_Stack_Node**, struct HammingNode**);
+struct HammingNode* pop_stack_hamming(struct Hamming_Stack_Node**);
 Entry* Put_data(struct Exact_Node* node);
 ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist);
 unsigned int hash_interger(unsigned int x);
