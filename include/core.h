@@ -120,6 +120,16 @@ struct result{
     QueryID* query_id;
     struct result* next;
 };
+struct word_node{
+    char* word;
+    struct word_node* next;
+};
+struct Result_Hash_Node{
+    QueryID query_id;
+    unsigned int distinct_words;
+    struct word_node* word_start;
+    struct Result_Hash_Node* next;
+};
 struct Stack_result{
     struct result* first;
     struct result* top; 
@@ -369,6 +379,9 @@ QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int 
 void Put_query_on_Active_Queries(QueryID query_id,int words_num);
 Entry* Merge_List(Entry* a,Entry* b,Entry* c);
 void Delete_Result_List(Entry* en);
+void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array);
+void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1);
+void Delete_From_Stack();
 
 #ifdef __cplusplus
 }

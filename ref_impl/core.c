@@ -21,10 +21,14 @@ struct Query_Info* ActiveQueries;
 struct Exact_Root* HashTableExact;
 int bucket_sizeofHashTableExact;
 unsigned int active_queries;
-
+struct Stack_result* StackArray;
 
 ErrorCode InitializeIndex(){
 	active_queries=0;
+	StackArray=malloc(sizeof(struct Stack_result));
+	StackArray->counter=0;
+	StackArray->first=NULL;
+	StackArray->top=NULL;
 	ActiveQueries=NULL;
 	BKTreeIndexEdit=malloc(sizeof(Index));
 	BKTreeIndexEdit->root=NULL;
@@ -137,6 +141,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		hamming_list=Hamming_Result(words_oftext[i],&num3);
 	}
 	QueryID* query_id_result=Put_On_Result_Hash_Array(exact_list,edit_list,hamming_list,num1,num2,num3,&num_result);
+	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(exact_list);
 	Delete_Result_List(edit_list);
 	Delete_Result_List(hamming_list);
@@ -148,8 +153,15 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 
 
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
-{
-
+{	
+	DocID doc=StackArray->top->doc_id;
+	*p_doc_id=doc;
+	unsigned int counter=StackArray->top->result_counter;
+	*p_num_res=counter;
+	QueryID* curr=malloc(StackArray->top->result_counter*sizeof(QueryID));
+	for(int i=0;i<StackArray->top->result_counter;i++)
+		curr[i]=StackArray->top->query_id[i];
+	Delete_From_Stack();
 	return EC_SUCCESS;
 }
 
@@ -975,6 +987,7 @@ void Put_query_on_Active_Queries(QueryID query_id,int words_num){
 	struct Query_Info* start=ActiveQueries;
 	struct Query_Info* node=malloc(sizeof(struct Query_Info));
 	node->next=NULL;
+	node->query_id=query_id;
 	node->counter_of_distinct_words=words_num;
 	if(start==NULL){
 		start=node;
@@ -1032,5 +1045,222 @@ QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int 
 	float curr_size=sum/0.8;
 	int size=(int)curr_size;
 	size=NextPrime(size);
-	return NULL;
+	struct Result_Hash_Node** hash_array=malloc(size*sizeof(struct Result_Hash_Node*));
+	for(int i=0;i<size;i++)
+		hash_array[i]=NULL;
+	Entry* s1=en1;
+	while(1){
+		if(s1==NULL)
+			break;
+		char* the_word=s1->my_word;
+		payload_node* p1=s1->payload;
+		while(1){
+			if(p1==NULL)
+				break;
+			QueryID q=p1->query_id;
+			int bucket_size=hash_interger(q)%size;
+			struct Result_Hash_Node* r1=hash_array[bucket_size];
+			Hash_Put_Result(q,the_word,&r1);
+			p1=p1->next;
+		}
+		s1=s1->next;
+	}
+	s1=en2;
+	while(1){
+		if(s1==NULL)
+			break;
+		char* the_word=s1->my_word;
+		payload_node* p1=s1->payload;
+		while(1){
+			if(p1==NULL)
+				break;
+			QueryID q=p1->query_id;
+			int bucket_size=hash_interger(q)%size;
+			struct Result_Hash_Node* r1=hash_array[bucket_size];
+			Hash_Put_Result(q,the_word,&r1);
+			p1=p1->next;
+		}
+		s1=s1->next;
+	}
+	s1=en3;
+	while(1){
+		if(s1==NULL)
+			break;
+		char* the_word=s1->my_word;
+		payload_node* p1=s1->payload;
+		while(1){
+			if(p1==NULL)
+				break;
+			QueryID q=p1->query_id;
+			int bucket_size=hash_interger(q)%size;
+			struct Result_Hash_Node* r1=hash_array[bucket_size];
+			Hash_Put_Result(q,the_word,&r1);
+			p1=p1->next;
+		}
+		s1=s1->next;
+	}
+	struct Info* result_list=NULL;
+	int length_final_array=0;
+	for(int i=0;i<active_queries;i++){
+		struct Query_Info* qnode=&ActiveQueries[i];
+		int correct_distinct_words=qnode->counter_of_distinct_words;
+		QueryID q=qnode->query_id;
+		int bucket_num=hash_interger(q)%size;
+		struct Result_Hash_Node* rhn1=hash_array[bucket_num];
+		while(1){
+			if(rhn1==NULL)
+				break;
+			if(rhn1->query_id==q){
+				int coun1=rhn1->distinct_words;
+				if(coun1==correct_distinct_words){
+					struct Info* info_node=malloc(sizeof(struct Info));
+					info_node->query_id=q;
+					info_node->next=NULL;
+					length_final_array++;
+					if(result_list==NULL)
+						result_list=info_node;
+					else{
+						struct Info* start_result=result_list;
+						while(1){
+							if(start_result->next==NULL){
+								start_result->next=info_node;
+								break;
+							}
+							start_result=start_result->next;
+						}
+					}
+				}
+			}
+			rhn1=rhn1->next;
+		}
+	}
+	QueryID* final=malloc(length_final_array*sizeof(QueryID));
+	struct Info* start_result=result_list;
+	int i=0;
+	while(1){
+		if(start_result==NULL)
+			break;
+		final[i++]=start_result->query_id;
+		start_result=start_result->next;
+	}
+	free(hash_array);
+	*result_counter=length_final_array;
+	return final;
+}
+
+
+
+
+
+
+
+
+void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
+	struct Result_Hash_Node* ptr1=*rr1;
+	if(ptr1==NULL){
+		struct Result_Hash_Node* new_node=malloc(sizeof(struct Result_Hash_Node));
+		new_node->next=NULL;
+		new_node->query_id=q;
+		new_node->distinct_words=1;
+		struct word_node* wn=malloc(sizeof(struct word_node));
+		wn->next=NULL;
+		wn->word=malloc((strlen(word)+1)+sizeof(char));
+		strcpy(wn->word,word);
+		new_node->word_start=wn;
+		*rr1=new_node;
+		return ;
+	}
+	struct Result_Hash_Node* ptr2=*rr1;
+	int found=0;
+	while(1){
+		if(ptr2->query_id==q){
+			found=1;
+			break;
+		}
+		ptr2=ptr2->next;
+		if(ptr2==NULL)
+			break;
+	}
+	if(found==1){
+		int found2=0;
+		struct word_node* s1=ptr2->word_start;
+		while(1){
+			if(!strcmp(s1->word,word)){
+				found2=1;
+				break;
+			}
+			s1=s1->next;
+		}
+		if(found2==0){
+			struct word_node* wn=malloc(sizeof(struct word_node));
+			wn->next=NULL;
+			wn->word=malloc((strlen(word)+1)+sizeof(char));
+			strcpy(wn->word,word);
+			ptr2->distinct_words++;
+			struct word_node* s1=ptr2->word_start;
+			while(1){
+				if(s1->next==NULL){
+					s1->next=wn;
+					break;
+				}
+				s1=s1->next;
+			}
+		}
+	}
+	else{
+		struct Result_Hash_Node* new_node=malloc(sizeof(struct Result_Hash_Node));
+		new_node->next=NULL;
+		new_node->query_id=q;
+		new_node->distinct_words=1;
+		struct word_node* wn=malloc(sizeof(struct word_node));
+		wn->next=NULL;
+		wn->word=malloc((strlen(word)+1)+sizeof(char));
+		strcpy(wn->word,word);
+		new_node->word_start=wn;
+		struct Result_Hash_Node* ptr2=*rr1;
+		while(1){
+			if(ptr2->next==NULL){
+				ptr2->next=new_node;
+				break;
+			}
+			ptr2=ptr2->next;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
+	struct result* node=malloc(sizeof(struct result));
+	node->doc_id=docID;
+	node->result_counter=size;
+	node->query_id=malloc(node->result_counter*sizeof(QueryID));
+	node->next=NULL;
+	for(int i=0;i<size;i++)
+		node->query_id[i]=query_array[i];
+	node->next=StackArray->top;
+	StackArray->top=node;
+	if(StackArray->first==NULL)
+		StackArray->first=node;
+}
+
+
+void Delete_From_Stack(){
+	struct result* node=StackArray->top;
+	StackArray->top=StackArray->top->next;
+	if(StackArray->top==NULL)
+		StackArray->first=NULL;
+	free(node->query_id);
+	free(node);
 }
