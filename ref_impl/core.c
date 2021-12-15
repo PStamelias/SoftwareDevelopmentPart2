@@ -991,7 +991,7 @@ Entry* Put_data(struct Exact_Node* node){
 }
 
 void push_stack_edit(struct Edit_Stack_Node** list, struct EditNode** n){
-    struct Edit_Stack_Node* temp = malloc(sizeof(struct EditNode));
+    struct Edit_Stack_Node* temp = malloc(sizeof(struct Edit_Stack_Node));
     temp->node = *n;
     temp->next = *list;
     *list = temp;
@@ -1005,7 +1005,7 @@ struct EditNode* pop_stack_edit(struct Edit_Stack_Node** list){
 }
 
 void push_stack_hamming(struct Hamming_Stack_Node** list, struct HammingNode** n){
-    struct Hamming_Stack_Node* temp = malloc(sizeof(struct EditNode));
+    struct Hamming_Stack_Node* temp = malloc(sizeof(struct Hamming_Stack_Node));
     temp->node = *n;
     temp->next = *list;
     *list = temp;
