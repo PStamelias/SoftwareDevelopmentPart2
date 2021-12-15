@@ -188,12 +188,12 @@ struct Exact_Root{
 
 struct Edit_Stack_Node{
     struct EditNode* node;
-    struct EditNode* next;
+    struct Edit_Stack_Node* next;
 };
 
 struct Hamming_Stack_Node{
     struct HammingNode* node;
-    struct HammingNode* next;
+    struct Hamming_Stack_Node* next;
 };
 
 extern struct HammingDistanceStruct* HammingDistanceStructNode;
