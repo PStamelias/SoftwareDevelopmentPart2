@@ -168,29 +168,51 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	int num_result=0;
-	printf("mitsos\n");
 	for(int i=0;i<words_num;i++){
+		struct Match_Type_List* Hamming_Node=Hamming_Result(words_oftext[i]);
 		struct Match_Type_List* Exact_Node=Exact_Result(words_oftext[i]);
-		printf("Edw\n");
-		if(Exact_Node==NULL)
-			printf("mitsos\n");
-		printf("ddd\n");
 		if(Final_List->start==NULL){
+			printf("1\n");
 			Final_List->start=Exact_Node->start;
 			Final_List->cur=Exact_Node->cur;
 		}
 		else{
-
+			printf("2\n");
 			Final_List->cur->next=Exact_Node->start;
 		}
+		printf("a\n");
 		Final_List->counter+=Exact_Node->counter;
-		/*edit_list=Edit_Result(words_oftext[i],&num2);
-		hamming_list=Hamming_Result(words_oftext[i],&num3);*/
+		struct Match_Type_List* Edit_Node=Edit_Result(words_oftext[i]);
+		if(Final_List->start==NULL){
+			printf("4\n");
+			Final_List->start=Edit_Node->start;
+			Final_List->cur=Edit_Node->cur;
+		}
+		else{
+			printf("5\n");
+			Final_List->cur->next=Edit_Node->start;
+		}
+		//struct Match_Type_List* Hamming_Node=Hamming_Result(words_oftext[i]);
+		if(Hamming_Node==NULL)
+			printf("empty hamming node\n");
+		printf("vgika\n");
+		if(Final_List->start==NULL){
+			printf("edw1\n");
+			Final_List->start=Hamming_Node->start;
+			printf("some1\n");
+			Final_List->cur=Hamming_Node->cur;
+			printf("dd\n");
+		}
+		else{
+			printf("edw2\n");
+			Final_List->cur->next=Hamming_Node->start;
+		}
+		printf("c\n");
 	}
+	printf("vgika\n");
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
-	printf("----------------num_result-------------=%d\n",num_result);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
-	printf("dowddddddddddddddddd\n");
+	printf("----------------num_result-------------=%d\n",num_result);
 	Delete_Result_List(Final_List);
 	printf("dow\n");
 	for(int i=0;i<words_num;i++)
@@ -204,10 +226,14 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
 {	
 	printf("GetNextAvailRes\n");
+	if(StackArray->top==NULL)
+		printf("kala masdd\n");
 	DocID doc=StackArray->top->doc_id;
+	printf("mi\n");
 	*p_doc_id=doc;
 	unsigned int counter=StackArray->top->result_counter;
 	*p_num_res=counter;
+	printf("mi\n");
 	QueryID* curr=malloc(StackArray->top->result_counter*sizeof(QueryID));
 	for(int i=0;i<StackArray->top->result_counter;i++)
 		curr[i]=StackArray->top->query_id[i];
@@ -684,25 +710,11 @@ ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_
 				//printf("curr->wd=%s\n",curr_node->wd);
 				//rintf("word=%s\n",word);
 				if(start_Infonode==NULL){
-					if(!strcmp(word,"airlines")){
-						//printf("1\n");
-						//printf("----------------------------------------------\n");
-						//printf("curr_query_id=%u\n",info_node->query_id);
-						//printf("curr_match_dist=%u\n",info_node->match_dist);
-						//printf("----------------------------------------------\n");
-					}
 					curr_node->start_info=info_node;
 				}
 				else{
 					while(1){
 						if(start_Infonode->next==NULL){
-							if(!strcmp(word,"airlines")){
-								//printf("2\n");
-								//printf("----------------------------------------------\n");
-								//printf("curr_query_id=%u\n",info_node->query_id);
-								//printf("curr_match_dist=%u\n",info_node->match_dist);
-								//printf("----------------------------------------------\n");
-							}
 							start_Infonode->next=info_node;
 							break;
 						}
@@ -765,6 +777,7 @@ void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned in
 ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist){
 	int size_of_word=strlen(word);
 	int position_of_word=size_of_word-4;
+	printf("word=%s\n",word);
 	//printf("--%d\n",size_of_word);
 	struct word_RootPtr* word_ptr=&HammingDistanceStructNode->word_RootPtrArray[position_of_word];
 	//printf("%d\n",word_ptr->word_length);
@@ -977,7 +990,6 @@ struct Match_Type_List*   Exact_Result(char* word){
 	beg_ptr->counter=0;
 	int coun=0;
 	for(int i=0;i<bucket_sizeofHashTableExact;i++){
-		printf("%d\n",i);
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL)
 			continue;
@@ -1002,7 +1014,6 @@ struct Match_Type_List*   Exact_Result(char* word){
 				break;
 		}
 	}
-	printf("vgika\n");
 	return beg_ptr;
 }
 
@@ -1064,7 +1075,11 @@ struct HammingNode* pop_stack_hamming(struct Hamming_Stack_Node** list){
     return ret;
 }
 
-Entry* Edit_Result(char* word,int* num){
+struct Match_Type_List* Edit_Result(char* word){
+	struct Match_Type_List* Match_Node=malloc(sizeof(struct Match_Type_List));
+	Match_Node->start=NULL;
+	Match_Node->cur=NULL;
+	Match_Node->counter=0;
 	if(BKTreeIndexEdit == NULL){
 		return NULL;
 	}
@@ -1072,58 +1087,66 @@ Entry* Edit_Result(char* word,int* num){
 		return NULL;
 	}
 	int d, bot, ceil;
-	bool new = true;
-	Entry* new_entry = NULL;
 	Entry* result_list = NULL;
 	struct EditNode* curr;
 	struct Edit_Stack_Node* candidate_list = NULL;
 	push_stack_edit(&candidate_list, &(BKTreeIndexEdit->root));
 	struct EditNode* children = NULL;
 	struct Info* info;
-	struct payload_node* pl;
 	while(candidate_list != NULL){
 		curr = pop_stack_edit(&candidate_list);
 		info = curr->start_info;
 		d = EditDistance(word, strlen(word), curr->wd, strlen(curr->wd));
+		bool enter=false;
+		Entry* s=NULL;
 		while(info != NULL){
 			if(d <= info->match_dist){
+				if(enter==false){
+					Entry* new_node=malloc(sizeof(Entry));
+					new_node->next=NULL;
+					new_node->my_word=malloc((strlen(word)+1)*sizeof(char));
+					strcpy(new_node->my_word,word);
+					payload_node* p_node=malloc(sizeof(payload_node));
+					p_node->query_id=info->query_id;
+					p_node->next=NULL;
+					enter=true;
+					s=new_node;
+					new_node->payload=p_node;
+				}
+				else{
+					payload_node* p_node=malloc(sizeof(payload_node));
+					p_node->query_id=info->query_id;
+					p_node->next=NULL;
+					payload_node* beginning1=s->payload;
+					while(1){
+						if(beginning1->next==NULL){
+							beginning1->next=p_node;
+							break;
+						}
+						beginning1=beginning1->next;
+					}
+				}
 				//printf("d=%u\n",d);
 				//printf("word=%s\n",word);
 				//printf("curr->wd=%s\n",curr->wd);
 				//printf("info->query_id=%d\n",info->query_id);
 				//printf("info->match_dis=%d\n",info->match_dist);
 				//if(new_entry == NULL){
-				if(new){
-					//printf("enterrring--------------------------------------------------1\n");
-					(*num)++;
-					new_entry = malloc(sizeof(Entry));
-					new_entry->next = NULL;
-					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
-					strcpy(new_entry->my_word, word);
-					new_entry->payload = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
-					new_entry->payload->next = NULL;
-					pl = new_entry->payload->next;
-					new = false;
-				}
-				else{
-					//printf("enterrring--------------------------------------------------2\n");
-					pl = malloc(sizeof(payload_node));
-					pl->query_id = info->query_id;
-					pl->next = NULL;
-					pl = pl->next;
-				}
+				
 			}
 			info = info->next;
 		}
-		if(new_entry != NULL){
-			if(result_list != NULL){
-				new_entry->next = result_list;
-				result_list = new_entry;
-			}else{
-				result_list = new_entry;
+		if(enter==true){
+			if(Match_Node->start==NULL){
+				Match_Node->start=s;
+				Match_Node->cur=s;
+				Match_Node->counter=1;
 			}
-			new = true;
+			else{
+				Match_Node->cur->next=s;
+				Match_Node->cur=s;
+				Match_Node->counter++;
+			}
 		}
 		if(d <= MAX_MATCH_DIST){
 			bot = MAX_MATCH_DIST - d;
@@ -1139,80 +1162,82 @@ Entry* Edit_Result(char* word,int* num){
 			children = children->next;
 		}
 	}
-	if(result_list == NULL){
-		//printf("Result list is NULL\n");
-	}else{
-		printf("Result list is NOT NULL\n");
-	}
-	return result_list;
+	return Match_Node;
 }
 
-Entry* Hamming_Result(char* word,int* num){
+struct Match_Type_List* Hamming_Result(char* word){
+	struct Match_Type_List* Match_Node=malloc(sizeof(struct Match_Type_List));
+	Match_Node->start=NULL;
+	Match_Node->cur=NULL;
+	Match_Node->counter=0;
+	printf("adddddddddddddddddddddddd\n");
 	int position = strlen(word) - 4;
+	printf("word=%s\n",word);
 	if(HammingDistanceStructNode->word_RootPtrArray[position].HammingPtr == NULL){
-		return NULL;
+		printf("kio\n");
+		return Match_Node;
 	}
 	struct HammingNode* tree = 	HammingDistanceStructNode->word_RootPtrArray[position].HammingPtr->root;
 	if(tree == NULL){
-		return NULL;
+		printf("prokopis\n");
+		return Match_Node;
 	}
 	int d, bot, ceil;
-	bool new = true;
-	Entry* new_entry = NULL;
+	printf("entersddddddddddddd\n");
 	Entry* result_list = NULL;
 	struct HammingNode* curr;
 	struct Hamming_Stack_Node* candidate_list = NULL;
 	push_stack_hamming(&candidate_list, &tree);
 	struct HammingNode* children = NULL;
 	struct Info* info;
-	struct payload_node* pl;
+	printf("dd\n");
 	while(candidate_list != NULL){
 		curr = pop_stack_hamming(&candidate_list);
 		info = curr->start_info;
+		bool enter=false;
+		Entry* s=NULL;
 		d = HammingDistance(word, strlen(word), curr->wd, strlen(curr->wd));
 		while(info != NULL){
 			if(d <= info->match_dist){
-				//printf("HAMING \n");
-				//printf("d=%u\n",d);
-				//printf("word=%s\n",word);
-				//printf("curr->wd=%s\n",curr->wd);
-				//printf("info->query_id=%d\n",info->query_id);
-				//printf("info->match_dis=%d\n",info->match_dist);
-				//if(new_entry == NULL){
-				if(new){
-					//printf("enterrring--------------------------------------------------1\n");
-					(*num)++;
-					new_entry = malloc(sizeof(Entry));
-					new_entry->next = NULL;
-					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
-					strcpy(new_entry->my_word, word);
-					new_entry->payload = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
-					new_entry->payload->next = NULL;
-					pl = new_entry->payload->next;
-					new = false;
+				if(enter==false){
+					Entry* new_node=malloc(sizeof(Entry));
+					new_node->next=NULL;
+					new_node->my_word=malloc((strlen(word)+1)*sizeof(char));
+					strcpy(new_node->my_word,word);
+					payload_node* p_node=malloc(sizeof(payload_node));
+					p_node->query_id=info->query_id;
+					p_node->next=NULL;
+					enter=true;
+					s=new_node;
+					new_node->payload=p_node;
 				}
 				else{
-					//printf("enterrring--------------------------------------------------2\n");
-					pl = malloc(sizeof(payload_node));
-					pl->query_id = info->query_id;
-					pl->next = NULL;
-					pl = pl->next;
-					new_entry->payload->next = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
-
-				}
+					payload_node* p_node=malloc(sizeof(payload_node));
+					p_node->query_id=info->query_id;
+					p_node->next=NULL;
+					payload_node* beginning1=s->payload;
+					while(1){
+						if(beginning1->next==NULL){
+							beginning1->next=p_node;
+							break;
+						}
+						beginning1=beginning1->next;
+					}
+				}			
 			}
 			info = info->next;
 		}
-		if(new_entry != NULL){
-			if(result_list != NULL){
-				new_entry->next = result_list;
-				result_list = new_entry;
-			}else{
-				result_list = new_entry;
+		if(enter==true){
+			if(Match_Node->start==NULL){
+				Match_Node->start=s;
+				Match_Node->cur=s;
+				Match_Node->counter=1;
 			}
-			new = true;
+			else{
+				Match_Node->cur->next=s;
+				Match_Node->cur=s;
+				Match_Node->counter++;
+			}
 		}
 		if(d <= MAX_MATCH_DIST){
 			bot = MAX_MATCH_DIST - d;
@@ -1228,12 +1253,9 @@ Entry* Hamming_Result(char* word,int* num){
 			children = children->next;
 		}
 	}
-	if(result_list == NULL){
-		//printf("Result list is NULL\n");
-	}else{
-		printf("Result list is NOT NULL\n");
-	}
-	return result_list;
+	if(Match_Node==NULL)
+		printf("On hamming Match node is null\n");
+	return Match_Node;
 }
 
 
@@ -1320,15 +1342,18 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 	int sum=en->counter;
 	float curr_size=sum/0.8;
 	printf("sum=%d\n",sum);
+	if(sum==0){
+		*result_counter=0;
+		return NULL;
+	}
 	int size=(int)curr_size;
 	size=NextPrime(size);
-	printf("start1\n");
 	printf("size=%d\n",size);
 	struct Result_Hash_Node** hash_array=malloc(size*sizeof(struct Result_Hash_Node*));
 	for(int i=0;i<size;i++)
 		hash_array[i]=NULL;
+	printf("d\n");
 	Entry* start1=en->start;
-	printf("vgika\n");
 	while(1){
 		if(start1==NULL)
 			break;
@@ -1348,6 +1373,7 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 	struct Info* result_list=NULL;
 	int length_final_array=0;
 	struct Query_Info* qnode=ActiveQueries;
+	printf("etr\n");
 	while(1){
 		if(qnode==NULL) 
 			break;
@@ -1492,7 +1518,6 @@ void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 
 
 void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
-	printf("entre hree\n");
 	struct result* node=malloc(sizeof(struct result));
 	node->doc_id=docID;
 	node->result_counter=size;
@@ -1500,12 +1525,10 @@ void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
 	node->next=NULL;
 	for(int i=0;i<size;i++)
 		node->query_id[i]=query_array[i];
-	printf("entre hreedd\n");
 	node->next=StackArray->top;
 	StackArray->top=node;
 	if(StackArray->first==NULL)
 		StackArray->first=node;
-	printf("entre hreedd\n");
 }
 
 
@@ -1517,3 +1540,55 @@ void Delete_From_Stack(){
 	free(node->query_id);
 	free(node);
 }
+
+
+
+
+
+
+/*if(d <= info->match_dist){
+				//printf("HAMING \n");
+				//printf("d=%u\n",d);
+				//printf("word=%s\n",word);
+				//printf("curr->wd=%s\n",curr->wd);
+				//printf("info->query_id=%d\n",info->query_id);
+				//printf("info->match_dis=%d\n",info->match_dist);
+				//if(new_entry == NULL){
+				if(new){
+					//printf("enterrring--------------------------------------------------1\n");
+					(*num)++;
+					new_entry = malloc(sizeof(Entry));
+					new_entry->next = NULL;
+					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
+					strcpy(new_entry->my_word, word);
+					new_entry->payload = malloc(sizeof(payload_node));
+					new_entry->payload->query_id = info->query_id;
+					new_entry->payload->next = NULL;
+					pl = new_entry->payload->next;
+					new = false;
+				}
+				else{
+					//printf("enterrring--------------------------------------------------2\n");
+					pl = malloc(sizeof(payload_node));
+					pl->query_id = info->query_id;
+					pl->next = NULL;
+					pl = pl->next;
+					new_entry->payload->next = malloc(sizeof(payload_node));
+					new_entry->payload->query_id = info->query_id;
+
+				}
+			}*/
+
+
+
+
+
+/*if(new_entry != NULL){
+			if(result_list != NULL){
+				new_entry->next = result_list;
+				result_list = new_entry;
+			}else{
+				result_list = new_entry;
+			}
+			new = true;
+		}*/
