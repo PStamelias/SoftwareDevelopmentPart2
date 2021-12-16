@@ -1089,11 +1089,8 @@ Entry* Edit_Result(char* word,int* num){
 					//printf("enterrring--------------------------------------------------\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
-<<<<<<< HEAD
 					new_entry->next = NULL;
-=======
 					new_entry->next=NULL;
->>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
@@ -1167,11 +1164,8 @@ Entry* Hamming_Result(char* word,int* num){
 					//printf("enter\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
-<<<<<<< HEAD
 					new_entry->next = NULL;
-=======
 					new_entry->next=NULL;
->>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
@@ -1180,16 +1174,13 @@ Entry* Hamming_Result(char* word,int* num){
 					pl = new_entry->payload->next;
 				}
 				else{
-<<<<<<< HEAD
 					pl = malloc(sizeof(payload_node));
 					pl->query_id = info->query_id;
 					pl->next = NULL;
 					pl = pl->next;
-=======
-					//printf("Nikos oikonomopoulos\n");
 					new_entry->payload->next = malloc(sizeof(payload_node));
 					new_entry->payload->query_id = info->query_id;
->>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
+
 				}
 			}
 			info = info->next;
