@@ -1033,6 +1033,7 @@ Entry* Edit_Result(char* word,int* num){
 	push_stack_edit(&candidate_list, &(BKTreeIndexEdit->root));
 	struct EditNode* children = NULL;
 	struct Info* info;
+	struct payload_node* pl;
 	while(candidate_list != NULL){
 		curr = pop_stack_edit(&candidate_list);
 		info = curr->start_info;
@@ -1042,14 +1043,19 @@ Entry* Edit_Result(char* word,int* num){
 				if(new_entry == NULL){
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
+					new_entry->next = NULL;
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
-					new_entry->payload ->query_id = info->query_id;
+					new_entry->payload->query_id = info->query_id;
+					new_entry->payload->next = NULL;
+					pl = new_entry->payload->next;
 				}
 				else{
-					new_entry->payload->next = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
+					pl = malloc(sizeof(payload_node));
+					pl->query_id = info->query_id;
+					pl->next = NULL;
+					pl = pl->next;
 				}
 			}
 			info = info->next;
@@ -1091,6 +1097,7 @@ Entry* Hamming_Result(char* word,int* num){
 	push_stack_hamming(&candidate_list, &tree);
 	struct HammingNode* children = NULL;
 	struct Info* info;
+	struct payload_node* pl;
 	while(candidate_list != NULL){
 		curr = pop_stack_hamming(&candidate_list);
 		info = curr->start_info;
@@ -1100,14 +1107,19 @@ Entry* Hamming_Result(char* word,int* num){
 				if(new_entry == NULL){
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
+					new_entry->next = NULL;
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
-					new_entry->payload ->query_id = info->query_id;
+					new_entry->payload->query_id = info->query_id;
+					new_entry->payload->next = NULL;
+					pl = new_entry->payload->next;
 				}
 				else{
-					new_entry->payload->next = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
+					pl = malloc(sizeof(payload_node));
+					pl->query_id = info->query_id;
+					pl->next = NULL;
+					pl = pl->next;
 				}
 			}
 			info = info->next;
