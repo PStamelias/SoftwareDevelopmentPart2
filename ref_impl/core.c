@@ -160,39 +160,28 @@ ErrorCode EndQuery(QueryID query_id)
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
+	struct Match_Type_List* Final_List=malloc(sizeof(struct Match_Type_List));
 	printf("doc_id=%u\n",doc_id);
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
-	Entry* exact_list=NULL;
-	Entry* edit_list=NULL;
-	Entry* hamming_list=NULL;
-	int num1=0;
-	int num2=0;
 	int num_result=0;
-	int num3=0;
 	for(int i=0;i<words_num;i++){
-		exact_list=Exact_Result(words_oftext[i],&num1);
-		edit_list=Edit_Result(words_oftext[i],&num2);
-		hamming_list=Hamming_Result(words_oftext[i],&num3);
-		if(edit_list!=NULL)
-			printf("makis2\n");
-		if(hamming_list!=NULL)
-			printf("makis3\n");
+		struct Match_Type_List* Exact_Node=Exact_Result(words_oftext[i]);
+		if(Final_List->start==NULL)
+			Final_List->start=Exact_Node->start;
+		else
+			Final_List->cur->next=Exact_Node->start;
+		Final_List->counter+=Exact_Node->counter;
+		/*edit_list=Edit_Result(words_oftext[i],&num2);
+		hamming_list=Hamming_Result(words_oftext[i],&num3);*/
 	}
-	/*if(exact_list==NULL)
-		printf("null exact_list\n");
-	if(edit_list==NULL)
-		printf("null edit_list\n");
-	if(hamming_list==NULL)
-		printf("null hamming_list\n");*/
-	QueryID* query_id_result=Put_On_Result_Hash_Array(exact_list,edit_list,hamming_list,num1,num2,num3,&num_result);
+	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
-	Delete_Result_List(exact_list);
-	Delete_Result_List(edit_list);
-	Delete_Result_List(hamming_list);
+	Delete_Result_List(Final_List);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
+	free(Final_List);
 	return EC_SUCCESS;
 }
 
@@ -966,8 +955,11 @@ ErrorCode create_entry_list(entry_list** el){
 }
 
 
-Entry*  Exact_Result(char* word,int* num1){
-	Entry* beg_ptr=NULL;
+struct Match_Type_List*   Exact_Result(char* word){
+	struct Match_Type_List* beg_ptr=malloc(sizeof(struct Match_Type_List));
+	beg_ptr->start=NULL;
+	beg_ptr->cur=NULL;
+	beg_ptr->counter=0;
 	int coun=0;
 	for(int i=0;i<bucket_sizeofHashTableExact;i++){
 		struct Exact_Node* start=HashTableExact->array[i];
@@ -978,17 +970,15 @@ Entry*  Exact_Result(char* word,int* num1){
 				coun++;
 				Entry* en=Put_data(start);
 				//printf("%s\n",en->my_word);
-				if(beg_ptr==NULL)
-					beg_ptr=en;
+				if(beg_ptr->start==NULL){
+					beg_ptr->start=en;
+					beg_ptr->cur=en;
+					beg_ptr->counter++;
+				}
 				else{
-					Entry* s1=beg_ptr;
-					while(1){
-						if(s1->next==NULL){
-							s1->next=en;
-							break;
-						}
-						s1=s1->next;
-					}
+					beg_ptr->cur->next=en;
+					beg_ptr->cur=en;
+					beg_ptr->counter++;
 				}
 			}
 			start=start->next;
@@ -996,7 +986,6 @@ Entry*  Exact_Result(char* word,int* num1){
 				break;
 		}
 	}
-	*num1=coun;
 	return beg_ptr;
 }
 
@@ -1283,11 +1272,11 @@ unsigned int hash_interger(unsigned int x){
 
 
 
-void Delete_Result_List(Entry* en){
-	Entry* start1=en;
+void Delete_Result_List(struct Match_Type_List* en){
+	Entry* start1=en->start;
 	if(en==NULL)
 		return ;
-	Entry* start1_next=en->next;
+	Entry* start1_next=start1->next;
 	while(1){
 		payload_node* k1=start1->payload;
 		payload_node* k2=k1->next;
@@ -1310,8 +1299,8 @@ void Delete_Result_List(Entry* en){
 
 
 
-QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int num2,int num3,int* result_counter){
-	int sum=num1+num2+num3;
+QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counter){
+	/*int sum=num1+num2+num3;
 	float curr_size=sum/0.8;
 	int size=(int)curr_size;
 	size=NextPrime(size);
@@ -1418,8 +1407,8 @@ QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int 
 		start_result=start_result->next;
 	}
 	free(hash_array);
-	*result_counter=length_final_array;
-	return final;
+	*result_counter=length_final_array;*/
+	return NULL;
 }
 
 

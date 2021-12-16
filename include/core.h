@@ -115,6 +115,11 @@ struct NodeIndex{
   struct NodeIndex* next;
   struct NodeIndex* firstChild;
 };
+struct Match_Type_List{
+    Entry* start;
+    Entry* cur;
+    unsigned int counter;
+};
 struct result{
     DocID doc_id;
     unsigned int result_counter;
@@ -361,7 +366,7 @@ struct HammingNode* pop_stack_hamming(struct Hamming_Stack_Node**);
 Entry* Put_data(struct Exact_Node* node);
 ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist);
 unsigned int hash_interger(unsigned int x);
-Entry* Exact_Result(char* word,int* num);
+struct Match_Type_List*  Exact_Result(char* word);
 Entry* Edit_Result(char* word,int* num);
 ErrorCode create_entry_list(entry_list** el);
 Entry* Hamming_Result(char* word,int* num);
@@ -391,10 +396,10 @@ void Check_Edit_BKTree(QueryID query_id);
 void Check_Hamming_BKTrees(QueryID query_id);
 void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id);
 char** words_ofquery(const char* query_str,int* num);
-QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int num2,int num3,int* result_counter);
+QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counter);
 void Put_query_on_Active_Queries(QueryID query_id,int words_num);
 Entry* Merge_List(Entry* a,Entry* b,Entry* c);
-void Delete_Result_List(Entry* en);
+void Delete_Result_List(struct Match_Type_List* en);
 void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array);
 void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1);
 void Delete_From_Stack();
