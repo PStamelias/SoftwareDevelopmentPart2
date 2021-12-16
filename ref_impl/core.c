@@ -1066,8 +1066,9 @@ Entry* Edit_Result(char* word,int* num){
 		return NULL;
 	}
 	int d, bot, ceil;
+	bool new = true;
+	Entry* new_entry = NULL;
 	Entry* result_list = NULL;
-	Entry* new_entry = result_list;
 	struct EditNode* curr;
 	struct Edit_Stack_Node* candidate_list = NULL;
 	push_stack_edit(&candidate_list, &(BKTreeIndexEdit->root));
@@ -1085,20 +1086,22 @@ Entry* Edit_Result(char* word,int* num){
 				//printf("curr->wd=%s\n",curr->wd);
 				//printf("info->query_id=%d\n",info->query_id);
 				//printf("info->match_dis=%d\n",info->match_dist);
-				if(new_entry == NULL){
-					//printf("enterrring--------------------------------------------------\n");
+				//if(new_entry == NULL){
+				if(new){
+					//printf("enterrring--------------------------------------------------1\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
 					new_entry->next = NULL;
-					new_entry->next=NULL;
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
 					new_entry->payload->query_id = info->query_id;
 					new_entry->payload->next = NULL;
 					pl = new_entry->payload->next;
+					new = false;
 				}
 				else{
+					//printf("enterrring--------------------------------------------------2\n");
 					pl = malloc(sizeof(payload_node));
 					pl->query_id = info->query_id;
 					pl->next = NULL;
@@ -1108,7 +1111,13 @@ Entry* Edit_Result(char* word,int* num){
 			info = info->next;
 		}
 		if(new_entry != NULL){
-			new_entry = new_entry->next;
+			if(result_list != NULL){
+				new_entry->next = result_list;
+				result_list = new_entry;
+			}else{
+				result_list = new_entry;
+			}
+			new = true;
 		}
 		if(d <= MAX_MATCH_DIST){
 			bot = MAX_MATCH_DIST - d;
@@ -1124,8 +1133,10 @@ Entry* Edit_Result(char* word,int* num){
 			children = children->next;
 		}
 	}
-	if(new_entry!=NULL){
-		printf("new entry not null\n");
+	if(result_list == NULL){
+		//printf("Result list is NULL\n");
+	}else{
+		printf("Result list is NOT NULL\n");
 	}
 	return result_list;
 }
@@ -1140,8 +1151,9 @@ Entry* Hamming_Result(char* word,int* num){
 		return NULL;
 	}
 	int d, bot, ceil;
+	bool new = true;
+	Entry* new_entry = NULL;
 	Entry* result_list = NULL;
-	Entry* new_entry = result_list;
 	struct HammingNode* curr;
 	struct Hamming_Stack_Node* candidate_list = NULL;
 	push_stack_hamming(&candidate_list, &tree);
@@ -1160,20 +1172,22 @@ Entry* Hamming_Result(char* word,int* num){
 				//printf("curr->wd=%s\n",curr->wd);
 				//printf("info->query_id=%d\n",info->query_id);
 				//printf("info->match_dis=%d\n",info->match_dist);
-				if(new_entry == NULL){
-					//printf("enter\n");
+				//if(new_entry == NULL){
+				if(new){
+					//printf("enterrring--------------------------------------------------1\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
 					new_entry->next = NULL;
-					new_entry->next=NULL;
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
 					new_entry->payload->query_id = info->query_id;
 					new_entry->payload->next = NULL;
 					pl = new_entry->payload->next;
+					new = false;
 				}
 				else{
+					//printf("enterrring--------------------------------------------------2\n");
 					pl = malloc(sizeof(payload_node));
 					pl->query_id = info->query_id;
 					pl->next = NULL;
@@ -1186,7 +1200,13 @@ Entry* Hamming_Result(char* word,int* num){
 			info = info->next;
 		}
 		if(new_entry != NULL){
-			new_entry = new_entry->next;
+			if(result_list != NULL){
+				new_entry->next = result_list;
+				result_list = new_entry;
+			}else{
+				result_list = new_entry;
+			}
+			new = true;
 		}
 		if(d <= MAX_MATCH_DIST){
 			bot = MAX_MATCH_DIST - d;
@@ -1202,12 +1222,10 @@ Entry* Hamming_Result(char* word,int* num){
 			children = children->next;
 		}
 	}
-	if(new_entry==NULL){
-		//printf("word=%s\n",word);
-		printf("empty new\n");
-	}
-	if(new_entry!=NULL){
-		printf("new entry not null\n");
+	if(result_list == NULL){
+		//printf("Result list is NULL\n");
+	}else{
+		printf("Result list is NOT NULL\n");
 	}
 	return result_list;
 }
