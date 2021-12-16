@@ -176,6 +176,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		}
 		else{
 			Final_List->cur->next=Exact_Node->start;
+			Final_List->cur=Exact_Node->cur;
 		}
 		Final_List->counter+=Exact_Node->counter;
 		struct Match_Type_List* Edit_Node=Edit_Result(words_oftext[i]);
@@ -185,6 +186,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		}
 		else{
 			Final_List->cur->next=Edit_Node->start;
+			Final_List->cur=Exact_Node->cur;
 		}
 		Final_List->counter+=Edit_Node->counter;
 		struct Match_Type_List* Hamming_Node=Hamming_Result(words_oftext[i]);
@@ -195,6 +197,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		}
 		else{
 			Final_List->cur->next=Hamming_Node->start;
+			Final_List->cur=Exact_Node->cur;
 		}
 		Final_List->counter+=Hamming_Node->counter;
 	}
