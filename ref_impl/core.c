@@ -161,23 +161,38 @@ ErrorCode EndQuery(QueryID query_id)
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	struct Match_Type_List* Final_List=malloc(sizeof(struct Match_Type_List));
+	Final_List->start=NULL;
+	Final_List->cur=NULL;
+	Final_List->counter=0;
 	printf("doc_id=%u\n",doc_id);
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	int num_result=0;
+	printf("mitsos\n");
 	for(int i=0;i<words_num;i++){
 		struct Match_Type_List* Exact_Node=Exact_Result(words_oftext[i]);
-		if(Final_List->start==NULL)
+		printf("Edw\n");
+		if(Exact_Node==NULL)
+			printf("mitsos\n");
+		printf("ddd\n");
+		if(Final_List->start==NULL){
 			Final_List->start=Exact_Node->start;
-		else
+			Final_List->cur=Exact_Node->cur;
+		}
+		else{
+
 			Final_List->cur->next=Exact_Node->start;
+		}
 		Final_List->counter+=Exact_Node->counter;
 		/*edit_list=Edit_Result(words_oftext[i],&num2);
 		hamming_list=Hamming_Result(words_oftext[i],&num3);*/
 	}
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
+	printf("----------------num_result-------------=%d\n",num_result);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
+	printf("dowddddddddddddddddd\n");
 	Delete_Result_List(Final_List);
+	printf("dow\n");
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
@@ -962,6 +977,7 @@ struct Match_Type_List*   Exact_Result(char* word){
 	beg_ptr->counter=0;
 	int coun=0;
 	for(int i=0;i<bucket_sizeofHashTableExact;i++){
+		printf("%d\n",i);
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL)
 			continue;
@@ -986,6 +1002,7 @@ struct Match_Type_List*   Exact_Result(char* word){
 				break;
 		}
 	}
+	printf("vgika\n");
 	return beg_ptr;
 }
 
@@ -1274,7 +1291,7 @@ unsigned int hash_interger(unsigned int x){
 
 void Delete_Result_List(struct Match_Type_List* en){
 	Entry* start1=en->start;
-	if(en==NULL)
+	if(start1==NULL)
 		return ;
 	Entry* start1_next=start1->next;
 	while(1){
@@ -1299,20 +1316,24 @@ void Delete_Result_List(struct Match_Type_List* en){
 
 
 
-QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counter){
-	/*int sum=num1+num2+num3;
+QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter){
+	int sum=en->counter;
 	float curr_size=sum/0.8;
+	printf("sum=%d\n",sum);
 	int size=(int)curr_size;
 	size=NextPrime(size);
+	printf("start1\n");
+	printf("size=%d\n",size);
 	struct Result_Hash_Node** hash_array=malloc(size*sizeof(struct Result_Hash_Node*));
 	for(int i=0;i<size;i++)
 		hash_array[i]=NULL;
-	Entry* s1=en1;
+	Entry* start1=en->start;
+	printf("vgika\n");
 	while(1){
-		if(s1==NULL)
+		if(start1==NULL)
 			break;
-		char* the_word=s1->my_word;
-		payload_node* p1=s1->payload;
+		char* the_word=start1->my_word;
+		payload_node* p1=start1->payload;
 		while(1){
 			if(p1==NULL)
 				break;
@@ -1322,41 +1343,7 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counte
 			Hash_Put_Result(q,the_word,&r1);
 			p1=p1->next;
 		}
-		s1=s1->next;
-	}
-	s1=en2;
-	while(1){
-		if(s1==NULL)
-			break;
-		char* the_word=s1->my_word;
-		payload_node* p1=s1->payload;
-		while(1){
-			if(p1==NULL)
-				break;
-			QueryID q=p1->query_id;
-			int bucket_size=hash_interger(q)%size;
-			struct Result_Hash_Node* r1=hash_array[bucket_size];
-			Hash_Put_Result(q,the_word,&r1);
-			p1=p1->next;
-		}
-		s1=s1->next;
-	}
-	s1=en3;
-	while(1){
-		if(s1==NULL)
-			break;
-		char* the_word=s1->my_word;
-		payload_node* p1=s1->payload;
-		while(1){
-			if(p1==NULL)
-				break;
-			QueryID q=p1->query_id;
-			int bucket_size=hash_interger(q)%size;
-			struct Result_Hash_Node* r1=hash_array[bucket_size];
-			Hash_Put_Result(q,the_word,&r1);
-			p1=p1->next;
-		}
-		s1=s1->next;
+		start1=start1->next;
 	}
 	struct Info* result_list=NULL;
 	int length_final_array=0;
@@ -1407,8 +1394,8 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counte
 		start_result=start_result->next;
 	}
 	free(hash_array);
-	*result_counter=length_final_array;*/
-	return NULL;
+	*result_counter=length_final_array;
+	return final;
 }
 
 
@@ -1505,6 +1492,7 @@ void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 
 
 void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
+	printf("entre hree\n");
 	struct result* node=malloc(sizeof(struct result));
 	node->doc_id=docID;
 	node->result_counter=size;
@@ -1512,10 +1500,12 @@ void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
 	node->next=NULL;
 	for(int i=0;i<size;i++)
 		node->query_id[i]=query_array[i];
+	printf("entre hreedd\n");
 	node->next=StackArray->top;
 	StackArray->top=node;
 	if(StackArray->first==NULL)
 		StackArray->first=node;
+	printf("entre hreedd\n");
 }
 
 
