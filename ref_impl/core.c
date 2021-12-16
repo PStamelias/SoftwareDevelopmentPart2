@@ -126,13 +126,9 @@ ErrorCode DestroyIndex(){
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
 	active_queries++;
-	//printf("-----------------------------\n");
 	int words_num=0;
 	char** query_words=words_ofquery(query_str,&words_num);
 	Put_query_on_Active_Queries(query_id,words_num);
-	for(int i=0;i<words_num;i++)
-		//printf("----%s\n",query_words[i]);
-	//printf("------------------------------------------------------\n");
 	if(match_type==0)
 		Exact_Put(query_words,words_num,query_id);
 	else if(match_type==1)
@@ -150,7 +146,7 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 }
 
 ErrorCode EndQuery(QueryID query_id)
-{
+{	
 	active_queries--;
 	Delete_Query_from_Active_Queries(query_id);
 	/*check if query exists on ExactHashTable*/
@@ -164,6 +160,7 @@ ErrorCode EndQuery(QueryID query_id)
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
+	printf("doc_id=%u\n",doc_id);
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	Entry* exact_list=NULL;
@@ -177,7 +174,17 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		exact_list=Exact_Result(words_oftext[i],&num1);
 		edit_list=Edit_Result(words_oftext[i],&num2);
 		hamming_list=Hamming_Result(words_oftext[i],&num3);
+		if(edit_list!=NULL)
+			printf("makis2\n");
+		if(hamming_list!=NULL)
+			printf("makis3\n");
 	}
+	/*if(exact_list==NULL)
+		printf("null exact_list\n");
+	if(edit_list==NULL)
+		printf("null edit_list\n");
+	if(hamming_list==NULL)
+		printf("null hamming_list\n");*/
 	QueryID* query_id_result=Put_On_Result_Hash_Array(exact_list,edit_list,hamming_list,num1,num2,num3,&num_result);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(exact_list);
@@ -192,6 +199,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
 {	
+	printf("GetNextAvailRes\n");
 	DocID doc=StackArray->top->doc_id;
 	*p_doc_id=doc;
 	unsigned int counter=StackArray->top->result_counter;
@@ -621,12 +629,26 @@ void delete_specific_payload(struct Exact_Node* node,QueryID query_id){
 
 
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
-	for(int i=0;i<words_num;i++)
+	//printf("query_id=%d\n",query_id);
+	for(int i=0;i<words_num;i++){
+		//printf("word=%s\n",words_ofquery[i]);
 		build_entry_index_Edit(words_ofquery[i],query_id,match_dist);
+	}
 }
 
 
 ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_dist){
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
+	//printf("word=%s\n",word);
+	//printf("query_id=%u\n",query_id);
+	//printf("match_dist=%u\n",match_dist);
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
+	//printf("-----------------------------------------------------------\n");
 	if(BKTreeIndexEdit->root==NULL){
 		struct EditNode* node=NULL;
 		node=malloc(sizeof(struct EditNode));
@@ -654,11 +676,29 @@ ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_
 				info_node->query_id=query_id;
 				info_node->match_dist=match_dist;
 				struct Info* start_Infonode=curr_node->start_info;
-				if(start_Infonode==NULL)
+				//printf("begin\n");
+				//printf("curr->wd=%s\n",curr_node->wd);
+				//rintf("word=%s\n",word);
+				if(start_Infonode==NULL){
+					if(!strcmp(word,"airlines")){
+						//printf("1\n");
+						//printf("----------------------------------------------\n");
+						//printf("curr_query_id=%u\n",info_node->query_id);
+						//printf("curr_match_dist=%u\n",info_node->match_dist);
+						//printf("----------------------------------------------\n");
+					}
 					curr_node->start_info=info_node;
+				}
 				else{
 					while(1){
 						if(start_Infonode->next==NULL){
+							if(!strcmp(word,"airlines")){
+								//printf("2\n");
+								//printf("----------------------------------------------\n");
+								//printf("curr_query_id=%u\n",info_node->query_id);
+								//printf("curr_match_dist=%u\n",info_node->match_dist);
+								//printf("----------------------------------------------\n");
+							}
 							start_Infonode->next=info_node;
 							break;
 						}
@@ -1040,10 +1080,20 @@ Entry* Edit_Result(char* word,int* num){
 		d = EditDistance(word, strlen(word), curr->wd, strlen(curr->wd));
 		while(info != NULL){
 			if(d <= info->match_dist){
+				//printf("d=%u\n",d);
+				//printf("word=%s\n",word);
+				//printf("curr->wd=%s\n",curr->wd);
+				//printf("info->query_id=%d\n",info->query_id);
+				//printf("info->match_dis=%d\n",info->match_dist);
 				if(new_entry == NULL){
+					//printf("enterrring--------------------------------------------------\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
+<<<<<<< HEAD
 					new_entry->next = NULL;
+=======
+					new_entry->next=NULL;
+>>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
@@ -1077,6 +1127,9 @@ Entry* Edit_Result(char* word,int* num){
 			children = children->next;
 		}
 	}
+	if(new_entry!=NULL){
+		printf("new entry not null\n");
+	}
 	return result_list;
 }
 
@@ -1104,10 +1157,21 @@ Entry* Hamming_Result(char* word,int* num){
 		d = HammingDistance(word, strlen(word), curr->wd, strlen(curr->wd));
 		while(info != NULL){
 			if(d <= info->match_dist){
+				//printf("HAMING \n");
+				//printf("d=%u\n",d);
+				//printf("word=%s\n",word);
+				//printf("curr->wd=%s\n",curr->wd);
+				//printf("info->query_id=%d\n",info->query_id);
+				//printf("info->match_dis=%d\n",info->match_dist);
 				if(new_entry == NULL){
+					//printf("enter\n");
 					(*num)++;
 					new_entry = malloc(sizeof(Entry));
+<<<<<<< HEAD
 					new_entry->next = NULL;
+=======
+					new_entry->next=NULL;
+>>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
 					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
 					strcpy(new_entry->my_word, word);
 					new_entry->payload = malloc(sizeof(payload_node));
@@ -1116,10 +1180,16 @@ Entry* Hamming_Result(char* word,int* num){
 					pl = new_entry->payload->next;
 				}
 				else{
+<<<<<<< HEAD
 					pl = malloc(sizeof(payload_node));
 					pl->query_id = info->query_id;
 					pl->next = NULL;
 					pl = pl->next;
+=======
+					//printf("Nikos oikonomopoulos\n");
+					new_entry->payload->next = malloc(sizeof(payload_node));
+					new_entry->payload->query_id = info->query_id;
+>>>>>>> a6d49bdff594de5f4e7df5e004042c9c4477e249
 				}
 			}
 			info = info->next;
@@ -1140,6 +1210,13 @@ Entry* Hamming_Result(char* word,int* num){
 			}
 			children = children->next;
 		}
+	}
+	if(new_entry==NULL){
+		//printf("word=%s\n",word);
+		printf("empty new\n");
+	}
+	if(new_entry!=NULL){
+		printf("new entry not null\n");
 	}
 	return result_list;
 }
@@ -1285,8 +1362,10 @@ QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int 
 	}
 	struct Info* result_list=NULL;
 	int length_final_array=0;
-	for(int i=0;i<active_queries;i++){
-		struct Query_Info* qnode=&ActiveQueries[i];
+	struct Query_Info* qnode=ActiveQueries;
+	while(1){
+		if(qnode==NULL) 
+			break;
 		int correct_distinct_words=qnode->counter_of_distinct_words;
 		QueryID q=qnode->query_id;
 		int bucket_num=hash_interger(q)%size;
@@ -1317,7 +1396,9 @@ QueryID* Put_On_Result_Hash_Array(Entry* en1,Entry* en2,Entry* en3,int num1,int 
 			}
 			rhn1=rhn1->next;
 		}
+		qnode=qnode->next;
 	}
+	// edw free to pinka katakermatismou
 	QueryID* final=malloc(length_final_array*sizeof(QueryID));
 	struct Info* start_result=result_list;
 	int i=0;
