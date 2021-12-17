@@ -388,7 +388,7 @@ void insert_HashTableExact_V2(struct Exact_Root* head,char* word,int bucket_num,
 bool empty_of_payload_nodes(struct Exact_Node* node);
 void Check_Exact_Hash_Array(QueryID query_id);
 ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist);
-void delete_specific_payload(struct Exact_Node* node,QueryID query_id);
+void delete_specific_payload(struct Exact_Node** node,QueryID query_id);
 void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist);
 void Delete_Query_from_Edit_Nodes(struct EditNode* node,QueryID query_id);
