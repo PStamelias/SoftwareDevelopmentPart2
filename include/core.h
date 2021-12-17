@@ -404,7 +404,6 @@ void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array);
 void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1);
 void Delete_From_Stack();
 
-
 #ifdef __cplusplus
 }
 #endif
