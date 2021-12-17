@@ -633,6 +633,39 @@ bool empty_of_payload_nodes(struct Exact_Node* node){
 	else return false;
 }
 
+//commented code is alex's
+/*
+void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
+	if(*node != NULL){
+		struct payload_node* s1=(*node)->beg;
+		struct payload_node* temp;
+		struct payload_node* prev = NULL;
+	//printf("mpika\n");
+	//	printf("edw1\n");
+	//	//printf("edw2\n");
+		//printf("edw3\n");
+		//printf("edw4\n");
+		while(s1 != NULL){
+			//printf("jump1\n");
+			if(s1->query_id==query_id){
+				//printf("enter here 1\n");
+				temp = s1;
+				s1 = s1->next;
+				if(prev != NULL){	//if this is not the first node
+					prev->next = s1->next;	//the prev node's next should point to the s1 next
+				}
+				free(temp);
+				break;	//if the payload is found and deleted exit the function
+			}
+			prev = s1;
+			s1 = s1->next;
+			//printf("jump2\n");
+			//printf("jump3\n");
+		}
+	}
+	//printf("vgika\n");
+}
+*/
 void delete_specific_payload(struct Exact_Node* node,QueryID query_id){
 	struct payload_node* s1=node->beg;
 	struct payload_node* s1_next=s1->next;
