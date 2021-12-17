@@ -626,33 +626,23 @@ void Check_Exact_Hash_Array(QueryID query_id){
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL) continue;
 		while(1){
-			printf("start1\n");
 			delete_specific_payload(&start,query_id);
 			bool val=empty_of_payload_nodes(start);
-			printf("start2\n");
 			if(val==true){
 				if(start==HashTableExact->array[i]){
-					printf("yes ena\n");
 					HashTableExact->array[i]=start->next;
 					HashTableExact->array[i]=NULL;
-					if(start->next!=NULL){
+					if(start->next!=NULL)
 						HashTableExact->array[i]->prev=NULL;
-					}
-					printf("yes dio\n");
-					printf("yes tria\n");
 					free(start);
-					printf("yes tessera\n");
-
 				}
 				else{
-					printf("no\n");
 					struct Exact_Node* delete_node=start;
 					start->next->prev=start->prev;
 					start->next->prev->next=start->next;
 					free(delete_node);
 				}
 			}
-			printf("start3\n");
 			start=start->next;
 			if(start==NULL)
 				break;
