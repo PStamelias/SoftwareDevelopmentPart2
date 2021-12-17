@@ -166,7 +166,6 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	Final_List->cur=NULL;
 	Final_List->counter=0;
 	int words_num=0;
-	my_little();
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	int num_result=0;
 	for(int i=0;i<words_num;i++){
@@ -231,8 +230,6 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	for(int i=0;i<num_result;i++)
 		printf("query_id=%d\n",query_id_result[i]);
 	printf("doc_id=%d\n",doc_id);
-	if(doc_id==14)
-		exit(0);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(Final_List);
 	for(int i=0;i<words_num;i++)
@@ -1444,10 +1441,6 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 
 
 
-
-
-
-
 void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 	struct Result_Hash_Node* ptr1=*rr1;
 	if(ptr1==NULL){
@@ -1486,7 +1479,6 @@ void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 			}
 			s1=s1->next;
 		}
-		printf("qer\n");
 		if(found2==0){
 			struct word_node* wn=malloc(sizeof(struct word_node));
 			wn->next=NULL;
@@ -1504,7 +1496,6 @@ void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 		}
 	}
 	else{
-		printf("found=2\n");
 		struct Result_Hash_Node* new_node=malloc(sizeof(struct Result_Hash_Node));
 		new_node->next=NULL;
 		new_node->query_id=q;
@@ -1524,17 +1515,6 @@ void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1){
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1560,79 +1540,4 @@ void Delete_From_Stack(){
 		StackArray->first=NULL;
 	free(node->query_id);
 	free(node);
-}
-
-
-
-
-
-
-/*if(d <= info->match_dist){
-				//printf("HAMING \n");
-				//printf("d=%u\n",d);
-				//printf("word=%s\n",word);
-				//printf("curr->wd=%s\n",curr->wd);
-				//printf("info->query_id=%d\n",info->query_id);
-				//printf("info->match_dis=%d\n",info->match_dist);
-				//if(new_entry == NULL){
-				if(new){
-					//printf("enterrring--------------------------------------------------1\n");
-					(*num)++;
-					new_entry = malloc(sizeof(Entry));
-					new_entry->next = NULL;
-					new_entry->my_word = malloc(sizeof(char)*(strlen(word)+1));
-					strcpy(new_entry->my_word, word);
-					new_entry->payload = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
-					new_entry->payload->next = NULL;
-					pl = new_entry->payload->next;
-					new = false;
-				}
-				else{
-					//printf("enterrring--------------------------------------------------2\n");
-					pl = malloc(sizeof(payload_node));
-					pl->query_id = info->query_id;
-					pl->next = NULL;
-					pl = pl->next;
-					new_entry->payload->next = malloc(sizeof(payload_node));
-					new_entry->payload->query_id = info->query_id;
-
-				}
-			}*/
-
-
-
-
-
-/*if(new_entry != NULL){
-			if(result_list != NULL){
-				new_entry->next = result_list;
-				result_list = new_entry;
-			}else{
-				result_list = new_entry;
-			}
-			new = true;
-		}*/
-
-
-
-void my_little(){
-	printf("my_little sinartsi\n");
-	int bucket_num=hashing("anderson")%bucket_sizeofHashTableExact;
-	struct Exact_Node* g=HashTableExact->array[bucket_num];
-	while(1){
-		if(g==NULL)
-			break;
-		if(!strcmp(g->wd,"anderson")){
-			payload_node* k=g->beg;
-			while(1){
-				if(k==NULL)
-					break;
-				printf("%d ",k->query_id);
-				k=k->next;
-			}
-		}
-		g=g->next;
-	}
-	printf("end\n");
 }
