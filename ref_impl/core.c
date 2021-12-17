@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <unistd.h>
 #include <limits.h>
 
 //used in EditDistance below
@@ -164,19 +165,21 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	Final_List->start=NULL;
 	Final_List->cur=NULL;
 	Final_List->counter=0;
-	printf("doc_id=%u\n",doc_id);
 	int words_num=0;
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	int num_result=0;
 	for(int i=0;i<words_num;i++){
+		printf("%d\n",i);
 		struct Match_Type_List* Exact_Node=Exact_Result(words_oftext[i]);
 		if(Final_List->start==NULL){
 			Final_List->start=Exact_Node->start;
 			Final_List->cur=Exact_Node->cur;
 		}
 		else{
-			Final_List->cur->next=Exact_Node->start;
-			Final_List->cur=Exact_Node->cur;
+			if(Exact_Node->start!=NULL){
+				Final_List->cur->next=Exact_Node->start;
+				Final_List->cur=Exact_Node->cur;
+			}
 		}
 		Final_List->counter+=Exact_Node->counter;
 		struct Match_Type_List* Edit_Node=Edit_Result(words_oftext[i]);
@@ -185,8 +188,10 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 			Final_List->cur=Edit_Node->cur;
 		}
 		else{
-			Final_List->cur->next=Edit_Node->start;
-			Final_List->cur=Exact_Node->cur;
+			if(Edit_Node->start!=NULL){
+				Final_List->cur->next=Edit_Node->start;
+				Final_List->cur=Edit_Node->cur;
+			}
 		}
 		Final_List->counter+=Edit_Node->counter;
 		struct Match_Type_List* Hamming_Node=Hamming_Result(words_oftext[i]);
@@ -196,14 +201,21 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 			Final_List->cur=Hamming_Node->cur;
 		}
 		else{
-			Final_List->cur->next=Hamming_Node->start;
-			Final_List->cur=Exact_Node->cur;
+			if(Hamming_Node->start!=NULL){
+				Final_List->cur->next=Hamming_Node->start;
+				Final_List->cur=Hamming_Node->cur;
+			}
 		}
 		Final_List->counter+=Hamming_Node->counter;
 	}
+	printf("Final_List->counter=%d\n",Final_List->counter);
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
+	printf("num_result=%d\n",num_result);
+	for(int i=0;i<num_result;i++)
+		printf("query_id=%d\n",query_id_result[i]);
+	printf("doc_id=%d\n",doc_id);
+	sleep(10);
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
-	printf("----------------num_result-------------=%d\n",num_result);
 	Delete_Result_List(Final_List);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
@@ -1071,7 +1083,6 @@ struct Match_Type_List* Edit_Result(char* word){
 		return Match_Node;
 	}
 	int d, bot, ceil;
-	Entry* result_list = NULL;
 	struct EditNode* curr;
 	struct Edit_Stack_Node* candidate_list = NULL;
 	push_stack_edit(&candidate_list, &(BKTreeIndexEdit->root));
@@ -1157,7 +1168,6 @@ struct Match_Type_List* Hamming_Result(char* word){
 		return Match_Node;
 	}
 	int d, bot, ceil;
-	Entry* result_list = NULL;
 	struct HammingNode* curr;
 	struct Hamming_Stack_Node* candidate_list = NULL;
 	push_stack_hamming(&candidate_list, &tree);
@@ -1230,8 +1240,6 @@ struct Match_Type_List* Hamming_Result(char* word){
 			children = children->next;
 		}
 	}
-	if(Match_Node==NULL)
-		printf("On hamming Match node is null\n");
 	return Match_Node;
 }
 
