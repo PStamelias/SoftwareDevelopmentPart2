@@ -95,6 +95,7 @@ ErrorCode InitializeIndex(){
 }
 
 ErrorCode DestroyIndex(){
+	printf("destrroy_index\n");
 	for(int i=0; i<bucket_sizeofHashTableExact; i++){
 		if(HashTableExact->array[i] == NULL) continue;
 		struct Exact_Node* start = HashTableExact->array[i];
@@ -127,6 +128,7 @@ ErrorCode DestroyIndex(){
 
 ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_type, unsigned int match_dist)
 {
+	printf("startquery\n");
 	active_queries++;
 	int words_num=0;
 	char** query_words=words_ofquery(query_str,&words_num);
@@ -154,20 +156,27 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 
 ErrorCode EndQuery(QueryID query_id)
 {	
+	printf("EndQuery\n");
 	active_queries--;
+	printf("1\n");
 	Delete_Query_from_Active_Queries(query_id);
+	printf("2\n");
 	/*check if query exists on ExactHashTable*/
 	Check_Exact_Hash_Array(query_id);
+	printf("3\n");
 	/*check if query exists on EditBKTree*/
 	Check_Edit_BKTree(query_id);
+	printf("4\n");
 	/*check if query exists on HammingBKTrees*/
 	Check_Hamming_BKTrees(query_id);
+	printf("pearse to EndQuery\n");
 	return EC_SUCCESS;
 }
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
 	io=doc_id;
+	printf("doc_id=%d\n",io);
 	struct Match_Type_List* Final_List=malloc(sizeof(struct Match_Type_List));
 	Final_List->start=NULL;
 	Final_List->cur=NULL;
@@ -176,11 +185,6 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	char** words_oftext=Deduplicate_Method(doc_str,&words_num);
 	int num_result=0;
 	for(int i=0;i<words_num;i++){
-		/*if(doc_id==391){
-			printf("id=_doc%d\n",doc_id);
-			for(int i=0;i<words_num;i++)
-				printf("%s\n",words_oftext[i]);
-		}*/
 		struct Match_Type_List* Exact_Node=Exact_Result(words_oftext[i]);
 		if(Final_List->start==NULL){
 			Final_List->start=Exact_Node->start;
@@ -218,8 +222,8 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		}
 		Final_List->counter+=Hamming_Node->counter;
 	}
-	/*if(doc_id==391){
-			Entry* arxi1=Final_List->start;
+	/*if(doc_id==421){
+		Entry* arxi1=Final_List->start;
 		while(1){
 			if(arxi1==NULL)
 				break;
@@ -228,25 +232,27 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		}
 	}*/
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
-	/*if(doc_id==391){
+	/*if(doc_id==421){
 		printf("doc_id==%d\n",doc_id);
 		printf("num_result=%d\n",num_result);
 		for(int i=0;i<num_result;i++)
 			printf("%d\n",query_id_result[i]);
-		exit(0);
 	}*/
+	printf("start1\n");
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(Final_List);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
 	free(Final_List);
+	printf("prokopsi\n");
 	return EC_SUCCESS;
 }
 
 
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
 {	
+	printf("meta\n");
 	DocID doc=StackArray->top->doc_id;
 	*p_doc_id=doc;
 	unsigned int counter=StackArray->top->result_counter;
@@ -620,8 +626,10 @@ void Check_Exact_Hash_Array(QueryID query_id){
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL) continue;
 		while(1){
+			printf("start1\n");
 			delete_specific_payload(&start,query_id);
 			bool val=empty_of_payload_nodes(start);
+			printf("start2\n");
 			if(val==true){
 				if(start==HashTableExact->array[i]){
 					HashTableExact->array[i]=start->next;
@@ -635,6 +643,7 @@ void Check_Exact_Hash_Array(QueryID query_id){
 					free(delete_node);
 				}
 			}
+			printf("start3\n");
 			start=start->next;
 			if(start==NULL)
 				break;
@@ -1151,11 +1160,10 @@ struct Match_Type_List* Edit_Result(char* word){
 				Match_Node->counter++;
 			}
 		}
-		if(d <= MAX_MATCH_DIST){
-			bot = MAX_MATCH_DIST - d;
-		}else{
-			bot = d - MAX_MATCH_DIST;
-		}
+		if(d-MAX_MATCH_DIST<0)
+			bot = 0;
+		else
+			bot=d-MAX_MATCH_DIST;
 		ceil = d + MAX_MATCH_DIST;
 		children = curr->firstChild;
 		while(children != NULL){
@@ -1193,17 +1201,27 @@ struct Match_Type_List* Hamming_Result(char* word){
 		bool enter=false;
 		Entry* s=NULL;
 		d = HammingDistance(word, strlen(word), curr->wd, strlen(curr->wd));
+		/*if(io==421){
+			printf("io=%d\n",io);
+			printf("word=%s\n",word);
+			printf("curr->word=%s\n",curr->wd);
+		}*/
 		while(info != NULL){
-			/*if(info->query_id==777){
-					printf("--------------------------\n");
-					printf("query_id=%d\n",info->query_id);
-					printf("word=%s\n",word);
-					printf("curr->word=%s\n",curr->wd);
-					printf("doc_id=%d\n",io);
-					printf("d=%d\n",d);
-					printf("match_dist=%d\n",info->match_dist);
-					printf("--------------------------\n");
-			}*/
+			/*
+			if(io==421){
+			printf("io=%d\n",io);
+			printf("word=%s\n",word);
+			printf("curr->word=%s\n",curr->wd);
+		}	
+			printf("--------------------------\n");*/
+			/*if(io==421){
+			printf("%d ",info->query_id);
+			printf("strlen(word)=%ld\n",strlen(word));
+			printf("position=%d\n",position);
+			}
+			printf("%d ",info->query_id);
+			printf("strlen(word)=%ld\n",strlen(word));
+			printf("position=%d\n",position);*/
 			if(d <= info->match_dist){
 				if(enter==false){
 					Entry* new_node=malloc(sizeof(Entry));
@@ -1212,18 +1230,12 @@ struct Match_Type_List* Hamming_Result(char* word){
 					strcpy(new_node->my_word,curr->wd);
 					payload_node* p_node=malloc(sizeof(payload_node));
 					p_node->query_id=info->query_id;
-					if(info->query_id==777){
-						//printf("my_word=%s\n",new_node->my_word);
-					}
 					p_node->next=NULL;
 					enter=true;
 					s=new_node;
 					new_node->payload=p_node;
 				}
 				else{
-					if(info->query_id==777){
-						//printf("enter edw2\n");
-					}
 					payload_node* p_node=malloc(sizeof(payload_node));
 					p_node->query_id=info->query_id;
 					p_node->next=NULL;
@@ -1251,14 +1263,19 @@ struct Match_Type_List* Hamming_Result(char* word){
 				Match_Node->counter++;
 			}
 		}
-		if(d <= MAX_MATCH_DIST){
+		/*if(d <= MAX_MATCH_DIST){
 			bot = MAX_MATCH_DIST - d;
 		}else{
 			bot = d - MAX_MATCH_DIST;
-		}
+		}*/
+		if(d-MAX_MATCH_DIST<0)
+			bot = 0;
+		else
+			bot=d-MAX_MATCH_DIST;
 		ceil = d + MAX_MATCH_DIST;
 		children = curr->firstChild;
 		while(children != NULL){
+
 			if(children->distance >= bot && children->distance <= ceil){
 				push_stack_hamming(&candidate_list, &children);
 			}
