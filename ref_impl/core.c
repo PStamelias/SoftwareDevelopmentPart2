@@ -130,6 +130,7 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 	int words_num=0;
 	char** query_words=words_ofquery(query_str,&words_num);
 	if(query_id==777){
+		printf("match_type=%d\n",match_type);
 		for(int i=0;i<words_num;i++)
 			printf("%s\n",query_words[i]);
 	}
@@ -165,6 +166,14 @@ ErrorCode EndQuery(QueryID query_id)
 
 ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 {
+	if(doc_id==421){
+		for(int i=0;i<90;i++)
+			printf("\n");
+	}
+	if(doc_id==421){
+		for(int i=0;i<90;i++)
+			printf("--------------------------------\n");
+	}
 	struct Match_Type_List* Final_List=malloc(sizeof(struct Match_Type_List));
 	Final_List->start=NULL;
 	Final_List->cur=NULL;
@@ -211,10 +220,14 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		Final_List->counter+=Hamming_Node->counter;
 	}
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
+	printf("etcivvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
+	printf("doc_id=%d\n",doc_id);
 	if(doc_id==421){
+		printf("doc_id==%d\n",doc_id);
 		printf("num_result=%d\n",num_result);
 		for(int i=0;i<num_result;i++)
 			printf("%d\n",query_id_result[i]);
+		exit(0);
 	}
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(Final_List);
@@ -661,8 +674,9 @@ void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
 
 
 void Edit_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
-	for(int i=0;i<words_num;i++)
+	for(int i=0;i<words_num;i++){
 		build_entry_index_Edit(words_ofquery[i],query_id,match_dist);
+	}
 }
 
 
@@ -755,8 +769,13 @@ ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_
 
 
 void Hamming_Put(char** words_ofquery,int words_num,QueryID query_id,unsigned int match_dist){
-	for(int i=0;i<words_num;i++)
+	for(int i=0;i<words_num;i++){
+		if(query_id==777){
+			printf("to query id %d\n",query_id);
+			printf("%s\n",words_ofquery[i]);
+		}
 		build_entry_index_Hamming(words_ofquery[i],query_id,match_dist);
+	}
 }
 
 ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int match_dist){
@@ -764,6 +783,9 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 	int position_of_word=size_of_word-4;
 	struct word_RootPtr* word_ptr=&HammingDistanceStructNode->word_RootPtrArray[position_of_word];
 	if(word_ptr->HammingPtr==NULL){
+		if(query_id==777){
+			printf("111word=%s\n",word);
+		}
 		word_ptr->HammingPtr=malloc(sizeof(struct HammingIndex));
 		struct HammingNode* Hnode=NULL;
 		Hnode=malloc(sizeof(struct HammingNode));
@@ -780,11 +802,17 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 		word_ptr->HammingPtr->root=Hnode;
 	}
 	else{
+		if(query_id==777){
+			printf("133211word=%s\n",word);
+		}
 		struct HammingNode* curr_node=word_ptr->HammingPtr->root;
 		while(1){
 			int distance=0;
 			distance=HammingDistance(curr_node->wd,strlen(curr_node->wd),word,strlen(word));
 			if(distance==0){
+				if(query_id==777){
+					printf("curr_node->wd=%s\n",curr_node->wd);
+				}
 				struct Info* info_node=malloc(sizeof(struct Info));
 				info_node->next=NULL;
 				info_node->query_id=query_id;
@@ -815,6 +843,10 @@ ErrorCode build_entry_index_Hamming(char* word,QueryID query_id,unsigned int mat
 			if(found==1){
 				curr_node=target;
 				continue;
+			}
+			if(query_id==777){
+				printf("tryprokopis\n");
+				printf("curr_node->wd=%s\n",word);
 			}
 			struct HammingNode* new_node=malloc(sizeof(struct HammingNode));
 			new_node->next=NULL;
@@ -892,6 +924,9 @@ void Check_Hamming_BKTrees(QueryID query_id){
 }
 
 void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id){
+	if(query_id==777){
+		printf("Delete_Query_from_Hamming_Nodes me query_id=%d\n",query_id);
+	}
 	for(struct HammingNode* child=node->firstChild;child!=NULL;child=child->next)
 		Delete_Query_from_Hamming_Nodes(child,query_id);
 	struct Info* info_node=node->start_info;
@@ -1081,9 +1116,17 @@ struct Match_Type_List* Edit_Result(char* word){
 		curr = pop_stack_edit(&candidate_list);
 		info = curr->start_info;
 		d = EditDistance(word, strlen(word), curr->wd, strlen(curr->wd));
+		printf("curr->Wd=%s\n",curr->wd);
 		bool enter=false;
 		Entry* s=NULL;
 		while(info != NULL){
+			if(info->query_id==777){
+				printf("mpika reeeeeeeeeeeee--------------------------------------\n");
+				printf("query_id=%d\n",info->query_id);
+				printf("d=%d\n",d);
+				printf("curr->wd=%s\n",curr->wd);
+				printf("word=%s\n",word);
+			}
 			if(d <= info->match_dist){
 				if(enter==false){
 					Entry* new_node=malloc(sizeof(Entry));
@@ -1167,7 +1210,17 @@ struct Match_Type_List* Hamming_Result(char* word){
 		bool enter=false;
 		Entry* s=NULL;
 		d = HammingDistance(word, strlen(word), curr->wd, strlen(curr->wd));
+		printf("Hamming curr->Wd=%s\n",curr->wd);
 		while(info != NULL){
+			if(info->query_id==777){
+					printf("--------------------------\n");
+					printf("query_id=%d\n",info->query_id);
+					printf("d=%d\n",d);
+					printf("word=%s\n",word);
+					printf("curr->word=%s\n",curr->wd);
+					printf("match_dist=%d\n",info->match_dist);
+					printf("--------------------------\n");
+				}
 			if(d <= info->match_dist){
 				if(enter==false){
 					Entry* new_node=malloc(sizeof(Entry));
@@ -1176,12 +1229,18 @@ struct Match_Type_List* Hamming_Result(char* word){
 					strcpy(new_node->my_word,curr->wd);
 					payload_node* p_node=malloc(sizeof(payload_node));
 					p_node->query_id=info->query_id;
+					if(info->query_id==777){
+						printf("my_word=%s\n",new_node->my_word);
+					}
 					p_node->next=NULL;
 					enter=true;
 					s=new_node;
 					new_node->payload=p_node;
 				}
 				else{
+					if(info->query_id==777){
+						printf("enter edw2\n");
+					}
 					payload_node* p_node=malloc(sizeof(payload_node));
 					p_node->query_id=info->query_id;
 					p_node->next=NULL;
@@ -1330,6 +1389,15 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 			if(p1==NULL)
 				break;
 			QueryID q=p1->query_id;
+			if(q==777){
+				printf("-------------------------------\n");
+				printf("-------------------------------\n");
+				printf("to 777 matcharizetai gia lekseis\n"); 
+				printf("prokopis_word=%s\n",the_word);
+				printf("query=%d\n",q);
+				printf("-------------------------------\n");
+				printf("-------------------------------\n");
+			}
 			int bucket_size=hash_interger(q)%size;
 			Hash_Put_Result(q,the_word,&hash_array[bucket_size]);
 			p1=p1->next;
@@ -1351,6 +1419,11 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 				break;
 			if(rhn1->query_id==q){
 				int coun1=rhn1->distinct_words;
+				if(q==777){
+					printf("query_id=%d\n",q);
+					printf("coun1=%d\n",coun1);
+					printf("correct_distinct_words=%d\n",correct_distinct_words);
+				}
 				if(coun1==correct_distinct_words){
 					struct Info* info_node=malloc(sizeof(struct Info));
 					info_node->query_id=q;
