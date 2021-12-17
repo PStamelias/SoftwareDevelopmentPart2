@@ -252,7 +252,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 
 ErrorCode GetNextAvailRes(DocID* p_doc_id, unsigned int* p_num_res, QueryID** p_query_ids)
 {	
-	printf("meta\n");
+	printf("--------------------GetNextAvailRes\n");
 	DocID doc=StackArray->top->doc_id;
 	*p_doc_id=doc;
 	unsigned int counter=StackArray->top->result_counter;
@@ -632,11 +632,20 @@ void Check_Exact_Hash_Array(QueryID query_id){
 			printf("start2\n");
 			if(val==true){
 				if(start==HashTableExact->array[i]){
+					printf("yes ena\n");
 					HashTableExact->array[i]=start->next;
-					HashTableExact->array[i]->prev=NULL;
+					HashTableExact->array[i]=NULL;
+					if(start->next!=NULL){
+						HashTableExact->array[i]->prev=NULL;
+					}
+					printf("yes dio\n");
+					printf("yes tria\n");
 					free(start);
+					printf("yes tessera\n");
+
 				}
 				else{
+					printf("no\n");
 					struct Exact_Node* delete_node=start;
 					start->next->prev=start->prev;
 					start->next->prev->next=start->next;
