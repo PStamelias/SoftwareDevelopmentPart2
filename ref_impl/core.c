@@ -222,7 +222,7 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 	QueryID* query_id_result=Put_On_Result_Hash_Array(Final_List,&num_result);
 	printf("etcivvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
 	printf("doc_id=%d\n",doc_id);
-	if(doc_id==421){
+	if(doc_id==391){
 		printf("doc_id==%d\n",doc_id);
 		printf("num_result=%d\n",num_result);
 		for(int i=0;i<num_result;i++)
