@@ -422,7 +422,6 @@ void destroy_hamming_nodes(struct HammingNode* node){
 
 
 void destroy_Exact_nodes(struct EditNode* node){
-	printf("enter here\n");
 	for(struct EditNode* first=node->firstChild;first!=NULL;first=first->next)
 		destroy_Exact_nodes(first);
 	struct Info* start=node->start_info;
