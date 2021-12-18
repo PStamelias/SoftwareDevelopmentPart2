@@ -611,6 +611,7 @@ void Check_Exact_Hash_Array(QueryID query_id){
 					if(start->next!=NULL){
 						start->next->prev=start->prev;
 						start->next->prev->next=start->next;
+						free(delete_node);
 					}
 					else{
 						free(delete_node);
