@@ -660,10 +660,12 @@ void Check_Exact_Hash_Array(QueryID query_id){
 						}
 						else{
 							printf("else 6\n");
-							if(start==NULL)
+							if(start==NULL){
 								printf("to start einai null\n");
-							printf("else 1809\n");
-							free(start);
+							}else{
+								printf("else 1809\n");
+								free(delete_node);
+							}
 							printf("else 9\n");
 						}
 						printf("edw skaei\n");
@@ -672,8 +674,15 @@ void Check_Exact_Hash_Array(QueryID query_id){
 					printf("vgika apo edw\n");
 				}
 			}
-			if(start!=NULL)
+			if(start!=NULL){
+				if(start->next == NULL){
+					printf("start->next is NULL\n");
+				}
 				start=start->next;
+				if(start != NULL){
+					printf("start didnt get the NULL\n");
+				}
+			}
 			if(start==NULL)
 				break;
 		}
