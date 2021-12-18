@@ -156,20 +156,20 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 
 ErrorCode EndQuery(QueryID query_id)
 {	
-	printf("EndQuery\n");
+	//printf("EndQuery\n");
 	active_queries--;
-	printf("1\n");
+	//printf("1\n");
 	Delete_Query_from_Active_Queries(query_id);
-	printf("2\n");
+	//printf("2\n");
 	/*check if query exists on ExactHashTable*/
 	Check_Exact_Hash_Array(query_id);
-	printf("3\n");
+	//printf("3\n");
 	/*check if query exists on EditBKTree*/
 	Check_Edit_BKTree(query_id);
-	printf("4\n");
+	//printf("4\n");
 	/*check if query exists on HammingBKTrees*/
 	Check_Hamming_BKTrees(query_id);
-	printf("pearse to EndQuery\n");
+	//printf("pearse to EndQuery\n");
 	return EC_SUCCESS;
 }
 
@@ -238,14 +238,14 @@ ErrorCode MatchDocument(DocID doc_id, const char* doc_str)
 		for(int i=0;i<num_result;i++)
 			printf("%d\n",query_id_result[i]);
 	}*/
-	printf("start1\n");
+	//printf("start1\n");
 	Put_On_Stack_Result(doc_id,num_result,query_id_result);
 	Delete_Result_List(Final_List);
 	for(int i=0;i<words_num;i++)
 		free(words_oftext[i]);
 	free(words_oftext);
 	free(Final_List);
-	printf("prokopsi\n");
+	//printf("prokopsi\n");
 	return EC_SUCCESS;
 }
 
@@ -622,58 +622,86 @@ bool check_if_word_exists(char* word,int bucket_num,QueryID query_id){
 
 
 void Check_Exact_Hash_Array(QueryID query_id){
+	struct Exact_Node* start;
+	struct Exact_Node* delete_node;
 	for(int i=0;i<bucket_sizeofHashTableExact;i++){
-		struct Exact_Node* start=HashTableExact->array[i];
+		start=HashTableExact->array[i];
 		if(start==NULL) continue;
 		while(1){
-			printf("enter1\n");
+			//printf("enter1\n");
 			delete_specific_payload(&start,query_id);
-			printf("enter12\n");
+			//printf("enter12\n");
 			bool val=empty_of_payload_nodes(start);
-			printf("enter2\n");
+			//printf("enter2\n");
 			if(val==true){
 				if(start==HashTableExact->array[i]){
-					printf("if 1\n");
-					HashTableExact->array[i]=start->next;
-					printf("if 2\n");
-					HashTableExact->array[i]=NULL;
-					printf("if 3\n");
-					if(start->next!=NULL)
-						HashTableExact->array[i]->prev=NULL;
-					printf("if 4\n");
-					if(start!=NULL)
+					//////////
+					if(HashTableExact->array[i]->next == NULL){
+						free(HashTableExact->array[i]);
+						HashTableExact->array[i]=NULL;
+						start = NULL;
+					}else{
+					///////////
+						//printf("if 1\n");
+						HashTableExact->array[i]=start->next;
+						//printf("if 2\n");
+						//HashTableExact->array[i]=NULL;	//this node is going to be freed
+						//printf("if 3\n");
+						if(start->next!=NULL)
+							HashTableExact->array[i]->prev=NULL;
+					}
+					//printf("if 4\n");
+					if(start!=NULL){
+						start->prev = NULL;
+						start->next = NULL;
 						free(start);
+						start = HashTableExact->array[i];//not start = start->next			/////////////////////
+					}
 				}
 				else{
-					printf("else 1\n");
-					struct Exact_Node* delete_node=start;
-					printf("else 2\n");
+					//printf("else 1\n");
+					//delete_node=start;
+					//printf("else 2\n");
 					if(start!=NULL){
-						printf("start is not null\n");
+						delete_node = start->next;
+						//printf("start is not null\n");
 						if(start->next!=NULL){
-							printf("else 3\n");
+							//printf("else 3\n");
 							start->next->prev=start->prev;
-							printf("else 4\n");
+							//printf("else 4\n");
 							start->next->prev->next=start->next;
-							printf("else 5\n");
-							free(delete_node);
+							//printf("else 5\n");
+							if(start != NULL){
+								free(start);
+								start = delete_node;
+							}else{
+								//printf("delete_node is NULL\n");
+							}
 						}
 						else{
-							printf("else 6\n");
+							//printf("else 6\n");
 							if(start==NULL){
-								printf("to start einai null\n");
+								//printf("to start einai null\n");
 							}else{
 								printf("else 1809\n");
-								free(delete_node);
+								if(start != NULL){
+									free(start);
+									start = NULL;
+								}else{
+									//printf("delete_node is NULL\n");
+								}
 							}
-							printf("else 9\n");
+							//printf("else 9\n");
 						}
-						printf("edw skaei\n");
-						printf("else 5\n");
+						//printf("edw skaei\n");
+						//printf("else 5\n");
 					}
-					printf("vgika apo edw\n");
+					//printf("vgika apo edw\n");
 				}
+			}else{//mine
+				start=start->next;
 			}
+			/*
 			if(start!=NULL){
 				if(start->next == NULL){
 					printf("start->next is NULL\n");
@@ -683,6 +711,7 @@ void Check_Exact_Hash_Array(QueryID query_id){
 					printf("start didnt get the NULL\n");
 				}
 			}
+			*/
 			if(start==NULL)
 				break;
 		}
@@ -692,36 +721,43 @@ void Check_Exact_Hash_Array(QueryID query_id){
 
 
 bool empty_of_payload_nodes(struct Exact_Node* node){
+	if(node == NULL){
+		return false;
+	}
 	if(node->beg==NULL) return true;
 	else return false;
 }
 
 
 void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
-	struct payload_node* s1=(*node)->beg;
-	if((*node)->beg==NULL)
-		return ;
-	struct payload_node* s1_next=s1->next;
-	if(s1->query_id==query_id){
-		printf("prokopis1\n");
-		(*node)->beg=s1_next;
-		free(s1);
-	}
-	else{
-		if(s1_next==NULL)
+	if(*node != NULL){
+		struct payload_node* s1=(*node)->beg;
+		if((*node)->beg==NULL)
 			return ;
-		while(1){
+		struct payload_node* s1_next=s1->next;
+		if(s1->query_id==query_id){
+			printf("prokopis1\n");
+			(*node)->beg=s1_next;
+			free(s1);
+			s1 = NULL;
+		}
+		else{
 			if(s1_next==NULL)
-				break;
-			if(s1_next->query_id==query_id){
-				s1->next=s1_next->next;
-				free(s1_next);
-				break;
+				return ;
+			while(1){
+				if(s1_next==NULL)
+					break;
+				if(s1_next->query_id==query_id){
+					s1->next=s1_next->next;
+					free(s1_next);
+					s1_next = NULL;
+					break;
+				}
+				s1=s1_next;
+				if(s1==NULL)
+					break;
+				s1_next=s1_next->next;
 			}
-			s1=s1_next;
-			if(s1==NULL)
-				break;
-			s1_next=s1_next->next;
 		}
 	}
 	
