@@ -626,24 +626,54 @@ void Check_Exact_Hash_Array(QueryID query_id){
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL) continue;
 		while(1){
+			printf("enter1\n");
 			delete_specific_payload(&start,query_id);
+			printf("enter12\n");
 			bool val=empty_of_payload_nodes(start);
+			printf("enter2\n");
 			if(val==true){
 				if(start==HashTableExact->array[i]){
+					printf("if 1\n");
 					HashTableExact->array[i]=start->next;
+					printf("if 2\n");
 					HashTableExact->array[i]=NULL;
+					printf("if 3\n");
 					if(start->next!=NULL)
 						HashTableExact->array[i]->prev=NULL;
-					free(start);
+					printf("if 4\n");
+					if(start!=NULL)
+						free(start);
 				}
 				else{
+					printf("else 1\n");
 					struct Exact_Node* delete_node=start;
-					start->next->prev=start->prev;
-					start->next->prev->next=start->next;
-					free(delete_node);
+					printf("else 2\n");
+					if(start!=NULL){
+						printf("start is not null\n");
+						if(start->next!=NULL){
+							printf("else 3\n");
+							start->next->prev=start->prev;
+							printf("else 4\n");
+							start->next->prev->next=start->next;
+							printf("else 5\n");
+							free(delete_node);
+						}
+						else{
+							printf("else 6\n");
+							if(start==NULL)
+								printf("to start einai null\n");
+							printf("else 1809\n");
+							free(start);
+							printf("else 9\n");
+						}
+						printf("edw skaei\n");
+						printf("else 5\n");
+					}
+					printf("vgika apo edw\n");
 				}
 			}
-			start=start->next;
+			if(start!=NULL)
+				start=start->next;
 			if(start==NULL)
 				break;
 		}
@@ -660,8 +690,11 @@ bool empty_of_payload_nodes(struct Exact_Node* node){
 
 void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
 	struct payload_node* s1=(*node)->beg;
+	if((*node)->beg==NULL)
+		return ;
 	struct payload_node* s1_next=s1->next;
 	if(s1->query_id==query_id){
+		printf("prokopis1\n");
 		(*node)->beg=s1_next;
 		free(s1);
 	}
