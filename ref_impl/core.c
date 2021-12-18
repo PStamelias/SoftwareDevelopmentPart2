@@ -6,6 +6,14 @@
 #include <unistd.h>
 #include <limits.h>
 
+struct HammingDistanceStruct* HammingDistanceStructNode;
+Index*  BKTreeIndexEdit;
+struct Query_Info* ActiveQueries;
+struct Exact_Root* HashTableExact;
+int bucket_sizeofHashTableExact;
+unsigned int active_queries;
+struct Stack_result* StackArray;
+
 //used in EditDistance below
 int min(int a, int b, int c){
     int m = a;
@@ -55,14 +63,6 @@ unsigned int HammingDistance(char* a, int na, char* b, int nb)
 }
 
 
-struct HammingDistanceStruct* HammingDistanceStructNode;
-Index*  BKTreeIndexEdit;
-struct Query_Info* ActiveQueries;
-struct Exact_Root* HashTableExact;
-int bucket_sizeofHashTableExact;
-unsigned int active_queries;
-struct Stack_result* StackArray;
-
 ErrorCode InitializeIndex(){
 	active_queries=0;
 	StackArray=malloc(sizeof(struct Stack_result));
@@ -96,19 +96,20 @@ ErrorCode InitializeIndex(){
 
 ErrorCode DestroyIndex(){
 	printf("destrroy_index\n");
+	int HammingIndexSize=(MAX_WORD_LENGTH-MIN_WORD_LENGTH)+1;
 	for(int i=0; i<bucket_sizeofHashTableExact; i++){
 		if(HashTableExact->array[i] == NULL) continue;
 		struct Exact_Node* start = HashTableExact->array[i];
 		struct Exact_Node* start_next = start->next;
 		while(1){
-			struct payload_node* start1=start->beg;
-			struct payload_node* start2=start1->next;
+			struct payload_node* p_start=start->beg;
+			struct payload_node* p_start_next=p_start->next;
 			while(1){
-				free(start1);
-				start1=start2;
-				if(start1==NULL)
+				free(p_start);
+				p_start=p_start_next;
+				if(p_start==NULL)
 					break;
-				start2=start2->next;
+				p_start_next=p_start_next->next;
 			}
 			free(start->wd);
 			free(start);
@@ -117,10 +118,14 @@ ErrorCode DestroyIndex(){
 			start_next = start_next->next;
 		}
 	}
+	Free_Active_Queries();
+	printf("StackArray->counter=%d\n",StackArray->counter);
+	free(StackArray);
 	free(HashTableExact->array);
 	free(HashTableExact);
-	//call destroy gia to BKTree */
-	free(BKTreeIndexEdit);
+	destroy_Exact_index(BKTreeIndexEdit);
+	for(int i=0;i<HammingIndexSize;i++)
+		destroy_hamming_entry_index(HammingDistanceStructNode->word_RootPtrArray[i].HammingPtr);
 	free(HammingDistanceStructNode->word_RootPtrArray);
 	free(HammingDistanceStructNode);	
 	return EC_SUCCESS;
@@ -372,17 +377,72 @@ char** Deduplicate_Method(const char* query_str,int* size){
 
 
 
-ErrorCode destroy_entry_index(Index* ix){
-	if(ix==NULL) return EC_FAIL;
-	destroy_index_nodes(ix->root);
+ErrorCode destroy_Exact_index(Index* ix){
+	if(ix==NULL) return EC_SUCCESS;
+	destroy_Exact_nodes(ix->root);
 	free(ix);
 	ix=NULL;
 	if(ix!=NULL) return EC_FAIL;	
 	return EC_SUCCESS;
 }
 
-void destroy_index_nodes(struct EditNode* node){
-	
+
+ErrorCode destroy_hamming_entry_index(struct HammingIndex* ix){
+	if(ix==NULL) return EC_SUCCESS;
+	destroy_hamming_nodes(ix->root);
+	free(ix);
+	ix=NULL;
+	if(ix!=NULL) return EC_FAIL;	
+	return EC_SUCCESS;
+}
+
+void destroy_hamming_nodes(struct HammingNode* node){
+	for(struct HammingNode* first=node->firstChild;first!=NULL;first=first->next)
+		destroy_hamming_nodes(first);
+	struct Info* start=node->start_info;
+	if(start==NULL){
+		free(node->wd);
+		free(node);
+		return ;
+	}
+	struct Info* start_next=start->next;
+	while(1){
+		if(start==NULL)
+			break;
+		free(start);
+		start=start_next;
+		if(start==NULL)
+			break;
+		start_next=start_next->next;
+	}
+	free(node->wd);
+	free(node);
+}
+
+
+
+void destroy_Exact_nodes(struct EditNode* node){
+	printf("enter here\n");
+	for(struct EditNode* first=node->firstChild;first!=NULL;first=first->next)
+		destroy_Exact_nodes(first);
+	struct Info* start=node->start_info;
+	if(start==NULL){
+		free(node->wd);
+		free(node);
+		return ;
+	}
+	struct Info* start_next=start->next;
+	while(1){
+		if(start==NULL)
+			break;
+		free(start);
+		start=start_next;
+		if(start==NULL)
+			break;
+		start_next=start_next->next;
+	}
+	free(node->wd);
+	free(node);
 }
 
 
@@ -1379,8 +1439,6 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 		}
 		qnode=qnode->next;
 	}
-
-	// edw free to pinka katakermatismou
 	QueryID* final=malloc(length_final_array*sizeof(QueryID));
 	struct Info* start_result=result_list;
 	int i=0;
@@ -1389,6 +1447,28 @@ QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en,int* result_counter
 			break;
 		final[i++]=start_result->query_id;
 		start_result=start_result->next;
+	}
+	for(int i=0;i<size;i++){
+		struct Result_Hash_Node* hash_node=hash_array[i];
+		if(hash_node==NULL) continue;
+		struct Result_Hash_Node* hash_node_next=hash_node->next;
+		while(1){
+			struct word_node* beg=hash_node->word_start;
+			struct word_node* beg_next=beg->next;
+			while(1){
+				free(beg->word);
+				free(beg);
+				beg=beg_next;
+				if(beg==NULL)
+					break;
+				beg_next=beg_next->next;
+			}
+			free(hash_node);
+			hash_node=hash_node_next;
+			if(hash_node==NULL)
+				break;
+			hash_node_next=hash_node_next->next;
+		}
 	}
 	free(hash_array);
 	*result_counter=length_final_array;
@@ -1500,6 +1580,7 @@ void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array){
 		node->query_id[i]=query_array[i];
 	node->next=StackArray->top;
 	StackArray->top=node;
+	StackArray->counter++;
 	if(StackArray->first==NULL)
 		StackArray->first=node;
 }
@@ -1510,6 +1591,20 @@ void Delete_From_Stack(){
 	StackArray->top=StackArray->top->next;
 	if(StackArray->top==NULL)
 		StackArray->first=NULL;
+	StackArray->counter--;
 	free(node->query_id);
 	free(node);
+}
+
+
+void Free_Active_Queries(){
+	struct Query_Info* start=ActiveQueries;
+	struct Query_Info* next_start=start->next;
+	while(1){
+		free(start);
+		start=next_start;
+		if(start==NULL)
+			break;
+		next_start=next_start->next;
+	}
 }

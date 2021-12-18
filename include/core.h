@@ -375,8 +375,8 @@ int NextPrime(int N);
 bool isPrime(int N);
 int hash_number_char(char* symbol,int buckets);
 char** Deduplicate_Method(const char* query_str,int* size);
-ErrorCode destroy_entry_index(Index* ix);
-void destroy_index_nodes(struct EditNode* node);
+ErrorCode destroy_Exact_index(Index* ix);
+void destroy_Exact_nodes(struct EditNode* node);
 struct Deduplicate_Hash_Array* Initialize_Hash_Array(int BucketsHashTable);
 void free_Deduplication_Hash_Array(struct Deduplicate_Hash_Array* hash,int BucketsHashTable);
 void insert_hash_array(struct Deduplicate_Hash_Array** hash,int BucketsHashTable,char* word);
@@ -403,6 +403,10 @@ void Delete_Result_List(struct Match_Type_List* en);
 void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array);
 void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1);
 void Delete_From_Stack();
+void Free_Active_Queries();
+ErrorCode destroy_hamming_entry_index(struct HammingIndex* ix);
+void destroy_hamming_nodes(struct HammingNode* node);
+
 
 #ifdef __cplusplus
 }
