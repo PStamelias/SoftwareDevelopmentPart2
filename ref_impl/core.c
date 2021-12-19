@@ -123,7 +123,7 @@ ErrorCode DestroyIndex(){
 	free(StackArray);
 	free(HashTableExact->array);
 	free(HashTableExact);
-	destroy_Exact_index(BKTreeIndexEdit);
+	destroy_Edit_index(BKTreeIndexEdit);////
 	for(int i=0;i<HammingIndexSize;i++)
 		destroy_hamming_entry_index(HammingDistanceStructNode->word_RootPtrArray[i].HammingPtr);
 	free(HammingDistanceStructNode->word_RootPtrArray);
@@ -155,14 +155,18 @@ ErrorCode StartQuery(QueryID query_id, const char* query_str, MatchType match_ty
 
 ErrorCode EndQuery(QueryID query_id)
 {	
+	//bool found = false;/////////////
 	active_queries--;
 	Delete_Query_from_Active_Queries(query_id);
 	/*check if query exists on ExactHashTable*/
+	//found = 
 	Check_Exact_Hash_Array(query_id);
+	//if(!found){/////
 	/*check if query exists on EditBKTree*/
 	Check_Edit_BKTree(query_id);
 	/*check if query exists on HammingBKTrees*/
 	Check_Hamming_BKTrees(query_id);
+	///}
 	return EC_SUCCESS;
 }
 
@@ -377,9 +381,9 @@ char** Deduplicate_Method(const char* query_str,int* size){
 
 
 
-ErrorCode destroy_Exact_index(Index* ix){
+ErrorCode destroy_Edit_index(Index* ix){
 	if(ix==NULL) return EC_SUCCESS;
-	destroy_Exact_nodes(ix->root);
+	destroy_Edit_nodes(ix->root);
 	free(ix);
 	ix=NULL;
 	if(ix!=NULL) return EC_FAIL;	
@@ -421,9 +425,9 @@ void destroy_hamming_nodes(struct HammingNode* node){
 
 
 
-void destroy_Exact_nodes(struct EditNode* node){
+void destroy_Edit_nodes(struct EditNode* node){
 	for(struct EditNode* first=node->firstChild;first!=NULL;first=first->next)
-		destroy_Exact_nodes(first);
+		destroy_Edit_nodes(first);
 	struct Info* start=node->start_info;
 	if(start==NULL){
 		free(node->wd);
@@ -648,12 +652,16 @@ bool check_if_word_exists(char* word,int bucket_num,QueryID query_id){
 }
 
 
-void Check_Exact_Hash_Array(QueryID query_id){
+void Check_Exact_Hash_Array(QueryID query_id){/////void
+	//bool ret = false;//////
 	for(int i=0;i<bucket_sizeofHashTableExact;i++){
 		struct Exact_Node* start=HashTableExact->array[i];
 		if(start==NULL) continue;
 		while(1){
+			//if(delete_specific_payload(&start,query_id)){
 			delete_specific_payload(&start,query_id);
+			//	ret = true;//////
+			//}///
 			bool val=empty_of_payload_nodes(start);
 			if(val==true){
 				if(start==HashTableExact->array[i]){
@@ -661,8 +669,10 @@ void Check_Exact_Hash_Array(QueryID query_id){
 						HashTableExact->array[i]->prev=NULL;
 						HashTableExact->array[i]=start->next;
 					}
-					else
+					else{
 						HashTableExact->array[i]=NULL;
+					}
+					free(start->wd);
 					free(start);
 				}
 				else{
@@ -670,9 +680,11 @@ void Check_Exact_Hash_Array(QueryID query_id){
 					if(start->next!=NULL){
 						start->next->prev=start->prev;
 						start->next->prev->next=start->next;
+						free(delete_node->wd);
 						free(delete_node);
 					}
 					else{
+						free(delete_node->wd);
 						free(delete_node);
 						start->prev->next=NULL;
 					}
@@ -683,6 +695,7 @@ void Check_Exact_Hash_Array(QueryID query_id){
 				break;
 		}
 	}
+	//return ret;////
 }
 
 
@@ -693,25 +706,26 @@ bool empty_of_payload_nodes(struct Exact_Node* node){
 }
 
 
-void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
+void delete_specific_payload(struct Exact_Node** node,QueryID query_id){/////void
 	struct payload_node* s1=(*node)->beg;
 	if((*node)->beg==NULL)
-		return ;
+		return ;//false;/////return
 	struct payload_node* s1_next=s1->next;
 	if(s1->query_id==query_id){
 		(*node)->beg=s1_next;
 		free(s1);
+		//return true;/////
 	}
 	else{
 		if(s1_next==NULL)
-			return ;
+			return ;//false;////return
 		while(1){
 			if(s1_next==NULL)
 				break;
 			if(s1_next->query_id==query_id){
 				s1->next=s1_next->next;
 				free(s1_next);
-				break;
+				break;//return true;///////break
 			}
 			s1=s1_next;
 			if(s1==NULL)
@@ -719,6 +733,7 @@ void delete_specific_payload(struct Exact_Node** node,QueryID query_id){
 			s1_next=s1_next->next;
 		}
 	}
+	//return false;//////
 	
 }
 
@@ -1597,6 +1612,9 @@ void Delete_From_Stack(){
 
 
 void Free_Active_Queries(){
+	if(ActiveQueries == NULL){
+		return;
+	}
 	struct Query_Info* start=ActiveQueries;
 	struct Query_Info* next_start=start->next;
 	while(1){
