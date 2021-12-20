@@ -368,7 +368,6 @@ ErrorCode build_entry_index_Edit(char* word,QueryID query_id,unsigned int match_
 unsigned int hash_interger(unsigned int x);
 struct Match_Type_List*  Exact_Result(char* word);
 struct Match_Type_List* Edit_Result(char* word);
-ErrorCode create_entry_list(entry_list** el);
 struct Match_Type_List* Hamming_Result(char* word);
 void Delete_Query_from_Active_Queries(QueryID query_id);
 int NextPrime(int N);
@@ -398,7 +397,6 @@ void Delete_Query_from_Hamming_Nodes(struct HammingNode* node,QueryID query_id);
 char** words_ofquery(const char* query_str,int* num);
 QueryID* Put_On_Result_Hash_Array(struct Match_Type_List* en1,int* result_counter);
 void Put_query_on_Active_Queries(QueryID query_id,int words_num);
-Entry* Merge_List(Entry* a,Entry* b,Entry* c);
 void Delete_Result_List(struct Match_Type_List* en);
 void Put_On_Stack_Result(DocID docID,int size,QueryID* query_array);
 void Hash_Put_Result(QueryID q,char* word,struct Result_Hash_Node** rr1);
@@ -406,7 +404,8 @@ void Delete_From_Stack();
 void Free_Active_Queries();
 ErrorCode destroy_hamming_entry_index(struct HammingIndex* ix);
 void destroy_hamming_nodes(struct HammingNode* node);
-
+int EditDistance(char* a, int na, char* b, int nb);
+unsigned int HammingDistance(char* a, int na, char* b, int nb);
 
 #ifdef __cplusplus
 }
