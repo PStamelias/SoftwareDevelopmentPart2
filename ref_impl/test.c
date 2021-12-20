@@ -263,7 +263,7 @@ void test_Initialize_Hash_Array(void){
 }*/
 
 void test_Deduplicate_Method(void){
-   char* query_str="word1 word2 word3 word3";
+   char* query_str="word1 word2 word2 word2 word1 word3 word3";
    int num=0;
    int found1=0;
    int found2=0;
